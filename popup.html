@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #btn{
+          background-color: #5863F8;
+            color:  #efe9f4;
+            border: black 2px solid;
+            transition: all 300ms cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #btn:hover{
+            color: black;
+            border: black 2px solid;
+            background-color: white;
+        }
+        #Deattachbtn{
+        background-color: #171d1c;
+            color: white;
+            transition: all 300ms cubic-bezier(0.19, 1, 0.22, 1);
+            border: black 1px solid;
+        }
+        #Deattachbtn:hover{
+            background-color: white;
+            color: #171d1c;
+            transition: all 300ms cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #support{
+             background-color: #efe9f4;
+             color: black;
+            border: black .5px solid;
+            transition: all 300ms cubic-bezier(0.19, 1, 0.22, 1);
+
+        }
+         #support:hover{
+            background-color: white;
+            color:  #171d1c;
+            border: black 1px solid;
+
+        }
+    </style>
+    <title>Popup</title>
+</head>
+<body>
+
+    <input type="file" id="file" accept=".srt" style="display: none;">
+    <div style="width: 250px; gap: 10px;height: 250px;display: flex;justify-content:flex-start;align-items: center;flex-direction: column;">
+        <hr style="margin-top: 0.5rem; margin-bottom: 0.5rem; width: 100%; border-width: 1px; border-color: #7c7c7c; border-style: solid;"></hr>
+        <label id="btn" for="file" style="padding: 10px 10px;;font-family:cursive;user-select: none;font-size: larger;display: flex;"><svg style="text-align: center;" stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" aria-hidden="true" height="20px" width="20px" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>Upload your subtitles</label>
+        <!-- <div style="display: flex;gap: 10px;width: 100%;justify-content: space-evenly;margin-top: 10px;font-size: larger;font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;">
+        </div> -->
+        <hr style="margin-top: 0.5rem; margin-bottom: 0.5rem; width: 100%; border-width: 1px; border-color: #7c7c7c; border-style: solid;"></hr>
+        <div style="padding: 10px 10px; font-size: larger;;font-family:cursive;user-select: none;cursor: pointer;" id="Deattachbtn">Open Subtitle Controls</div>
+        <hr style="margin-top: 0.5rem; margin-bottom: 0.5rem; width: 100%; border-width: 1px; border-color: #7c7c7c; border-style: solid;"></hr>
+        <a target="_blank" id="support" href="https://mail.google.com/mail/u/0/?fs=1&to=sofaomda738@gmail.com&tf=cm" style="text-decoration: none;padding: 10px 10px; font-size: larger;;font-family:cursive;user-select: none;cursor: pointer;" id="Deattachbtn">Support</a>
+        <hr style="margin-top: 0.5rem; margin-bottom: 0.5rem; width: 100%; border-width: 1px; border-color: #7c7c7c; border-style: solid;"></hr>
+
+    <script src="popbackground.js"></script>
+</body>
+</html>
