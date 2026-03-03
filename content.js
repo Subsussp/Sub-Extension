@@ -31,60 +31,22 @@ function createOverlay() {
   overlay.id = 'my-subtitle-overlay';
   Object.assign(overlay.style, {
     position:        'absolute',
-    bottom:          '10%',
-    left:            '50%',
-    translate:       '-50% 0',
-    "white-space":   'nowrap',
-    textAlign:       'center',
-    color:           'white',
-    fontSize:        '1.4em',
-    pointerEvents:   'none',
-    fontFamily: '"Open Sans", "Helvetica", "Arial", sans-serif',
-    fontWeight: "400",
-    zIndex:          '2147483647',
-    padding:         '0 30px',
-    boxSizing:       'border-box',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    pointerEvents: 'none',
+
   });
   return overlay;
 }
 
 let LocationId = window.location.href
 let subtitles = []
-
-function getActiveCue(time) {
-  console.log(+subtitleDelay)
-  return subtitles.find(s => (time + +subtitleDelay) >= s.start && (time + +subtitleDelay) <= s.end);
-}
-
 let overlay; 
-
+let newov;
 function debug(msg) {
-  if (overlay) overlay.innerHTML = `${msg}`;
+  if (newov) newov.innerHTML = `${msg}`;
 }
-
-whenReady(() => {
-
-  overlay = createOverlay();
-  document.body.appendChild(overlay);
-
-  if (!isInsideIframe && document.querySelectorAll('video').length < 1) {
-    return;
-  }
-
-  // debug('INSIDE IFRAME — looking for video...');
-  const delayControl = document.createElement('div');
-  delayControl.style.position = 'fixed';
-  delayControl.style.top = '5%';
-  delayControl.style.right = '5%';
-  delayControl.style.minWidth = '40px';
-  delayControl.style.background = 'rgba(255, 0, 0, 0.7)';
-  delayControl.style.color = 'white';
-  delayControl.style.padding = '8px 12px';
-  delayControl.style.borderRadius = '6px';
-  delayControl.style.fontSize = '16px';
-  delayControl.style.cursor = 'pointer';
-  delayControl.style.zIndex = 99999;
+function SubtitlesInit(video,delayControl) {
+    console.log(false)
+    debug('VIDEO FOUND — injecting overlay into container...');
     function showControl() {
     delayControl.style.opacity = '1';
     delayControl.style.visibility = 'visible';
@@ -96,25 +58,19 @@ whenReady(() => {
     delayControl.style.visibility = 'hidden';
     delayControl.style.pointerEvents = 'none';
   }
-  document.body.appendChild(delayControl);
-
-
-
-  waitForVideo((video) => {
-    debug('VIDEO FOUND — injecting overlay into container...');
-
     const container = video.parentElement;
     const containerPos = getComputedStyle(container).position;
     if (containerPos === 'static') {
       container.style.position = 'relative';
       debug(`container was static — fixed. tag: ${container.tagName}`);
     }
-    
+
     document.body.removeChild(overlay);
     document.body.removeChild(delayControl);
 
     container.appendChild(overlay);
-    container.appendChild(delayControl);
+    overlay.appendChild(delayControl);
+    showControl()
     if(window.localStorage.getItem("delay")){
       delayControl.textContent = `Subtitle Delay: ${(window.localStorage.getItem('delay'))}s` 
       subtitleDelay = +window.localStorage.getItem('delay')
@@ -144,19 +100,62 @@ whenReady(() => {
       window.localStorage.setItem("delay",+subtitleDelay)
       updateButton();
     });
-    
+    function syncOverlay() {
+      const rect = video.getBoundingClientRect();
+
+      overlay.style.position = 'fixed';
+      overlay.style.top = rect.top + 'px';
+      overlay.style.left = rect.left + 'px';
+      overlay.style.width = rect.width + 'px';
+      overlay.style.height = rect.height + 'px';
+      overlay.style.zIndex = '9999';
+    }
+
+    syncOverlay();
+
+    const ro = new ResizeObserver(syncOverlay);
+    ro.observe(video);
+
+    window.addEventListener('scroll', syncOverlay);
+    window.addEventListener('resize', syncOverlay);
+    newov = document.createElement('div')
+      Object.assign(newov.style, {
+    position:        'absolute',
+    left:            '50%',
+    bottom: "10%",
+    translate:       '-50% 0',
+    "white-space":   'nowrap',
+    display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+
+      textAlign: 'center',
+      // whiteSpace: 'pre-wrap', // better for subtitles
+      color: 'white',
+      fontSize: '1.4em',
+      pointerEvents: 'none',
+      fontFamily: '"Open Sans", "Helvetica", "Arial", sans-serif',
+      fontWeight: '400',
+      zIndex: '2147483647',
+      padding: '0 30px',
+      boxSizing: 'border-box',
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  });
+
+    overlay.appendChild(newov)
+
     debug(`OVERLAY INJECTED — container: ${container.tagName}.${container.className.slice(0, 30)}`);
     video.addEventListener('timeupdate', () => {
       const ct = video.currentTime;
       const cue = getActiveCue(ct);
       if (cue) {
-        overlay.innerHTML = `${cue.text}`;
+        newov.innerHTML = `${cue.text}`;
         } else if (subtitles.length === 0) {
-        overlay.innerHTML = `<span style="background:rgba(255,140,0,0.6);padding:2px 8px;border-radius:4px;">
-          no subtitles loaded — t=${t.toFixed(2)}s delay=${subtitleDelay}
+        newov.innerHTML = `<span style="background:rgba(255,140,0,0.6);padding:2px 8px;bottom:10;position:absolute;border-radius:4px;">
+          no subtitles loaded — t=${ct.toFixed(2)}s delay=${subtitleDelay}
         </span>`;
       } else {        
-        overlay.innerHTML = ``;
+        newov.innerHTML = ``;
       }     
     });
     let timeout;
@@ -223,18 +222,52 @@ whenReady(() => {
         }
         else if (msg?.spec == "subtitles"){
             if(msg?.type == 'Fontsize'){
-              overlay.style.fontSize = msg?.payload
+              newov.style.fontSize = msg?.payload
             }else if(msg?.type == "Color"){
-              overlay.style.color = msg?.payload
+              newov.style.color = msg?.payload
             }else if(msg?.type == "Position"){
-                overlay.style.bottom = msg?.payload
+                newov.style.bottom = msg?.payload
             }else if(msg?.type == "Weight"){
-                overlay.style.fontWeight = +msg?.payload
+                newov.style.fontWeight = +msg?.payload
             }
         }
         sendResponse({ statue: "ok" });
       }
     });
-  });
+  }
 
-});
+function getActiveCue(time) {
+  return subtitles.find(s => (time + +subtitleDelay) >= s.start && (time + +subtitleDelay) <= s.end);
+}
+
+whenReady(() => {
+  overlay = createOverlay();
+  document.body.appendChild(overlay);
+  const delayControl = document.createElement('div');
+  delayControl.style.position = 'absolute';
+  delayControl.style.top = '2%';
+  delayControl.style.right = '2%';
+  delayControl.style.minWidth = '40px';
+  delayControl.style.background = 'rgba(255, 0, 0, 0.7)';
+  delayControl.style.color = 'white';
+  delayControl.style.padding = '8px 12px';
+  delayControl.style.borderRadius = '6px';
+  delayControl.style.fontSize = '16px';
+  delayControl.style.cursor = 'pointer';
+  delayControl.style.zIndex = 99999;
+  delayControl.style.opacity = '0';
+  delayControl.style.visibility = 'hidden';
+  delayControl.style.pointerEvents = 'none';
+  document.body.appendChild(delayControl);
+  if (isInsideIframe) {
+
+  debug('INSIDE IFRAME — looking for video...');
+ 
+  waitForVideo((video)=>SubtitlesInit(video,delayControl));
+
+}
+else{
+
+  waitForVideo((video)=>SubtitlesInit(video,delayControl))
+}}
+);
