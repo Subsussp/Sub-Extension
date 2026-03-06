@@ -21,3 +21,5 @@ So my extension lets you do that.
 * Youtube support and mostly any website with a `<video>` element 
 * It works on most websites, but I don’t guarantee that it will work on all streaming websites.
 * Fully works on **android phones** via `kiwi browser` but only on this version [Download](https://kiwi-browser.en.uptodown.com/android/download/1045295267)
+## Phone demo 
+https://github.com/user-attachments/assets/6eddaf3d-6669-4a93-8b97-0c1ab3069ed7
