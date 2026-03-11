@@ -1,12 +1,12 @@
 
   function send(spec,type,payload,callback){
-    chrome.runtime.sendMessage({
-    to: "content",
-    action: "custom",
-    spec: spec,
-    type:type,
-    payload: payload
-  },callback);
+      chrome.runtime.sendMessage({
+      to: "content",
+      action: "custom",
+      spec: spec,
+      type:type,
+      payload: payload
+    },callback);
   }
   // Font size
   let state = '#FFF'
@@ -16,7 +16,7 @@
   sizeSlider.addEventListener('input', () => {
     sizeVal.textContent = sizeSlider.value + 'px';
    send("subtitles", "Fontsize",sizeVal.textContent,(data)=>{
-        console.log(data.statue)
+        console.log(data?.statue)
         
       });
   });
@@ -27,7 +27,7 @@
       document.querySelectorAll('[data-weight]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       send("subtitles","Weight",btn.dataset.weight,(data)=>{
-        console.log(data.statue)
+        console.log(data?.statue)
       });
     });
   });
@@ -38,7 +38,7 @@
       document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       send("subtitles","Color",btn.dataset.color,(data)=>{
-        console.log(data.statue)
+        console.log(data?.statue)
       });
 
     });
@@ -51,7 +51,7 @@
   posSlider.addEventListener('input', () => {
     posVal.textContent = posSlider.value + '%';
     send("subtitles","Position", (100 - posSlider.value) + '%',(data)=>{
-        console.log(data.statue)
+        console.log(data?.statue)
         
       });
   }); 
@@ -65,7 +65,7 @@
       color = e.target.value;
       updateColorButtons()
       send("subtitles","Color",color,(data)=>{
-        console.log(data.statue)
+        console.log(data?.statue)
       });
   });
   // Delay
@@ -84,12 +84,13 @@
   });
   delayVal.addEventListener("input", (e) => {
       send("delay","Input",delayVal.value,(data)=>{
+      console.log(data)
       delay = +delayVal.value
     });
   });
   document.getElementById('delay-plus').addEventListener('click', () => {
     send("delay","", +0.1,(data)=>{
-      delay = data.delay
+      delay = data?.delay
       console.log(delay)
       updateDelay();
     });
@@ -98,7 +99,7 @@
   document.getElementById('delay-reset').addEventListener('click', () => {
     delay = 0;
     send("delay","Reset",0,(data)=>{
-        console.log(data.statue)
+        console.log(data?.statue)
         
       });
     updateDelay();

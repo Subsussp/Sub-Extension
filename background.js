@@ -37,7 +37,6 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
     return true
   }
   if(msg?.to == "content"){
-    // Get all windows
     chrome.windows.getAll({ populate: true }, (windows) => {
       const normalWindow = windows.find(w => w.type === "normal");
       if (!normalWindow) return;

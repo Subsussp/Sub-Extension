@@ -36,7 +36,6 @@ function createOverlay() {
   });
   return overlay;
 }
-
 let LocationId = window.location.href
 let subtitles = []
 let overlay; 
@@ -45,7 +44,6 @@ function debug(msg) {
   if (newov) newov.innerHTML = `${msg}`;
 }
 function SubtitlesInit(video,delayControl) {
-    console.log(false)
     debug('VIDEO FOUND — injecting overlay into container...');
     function showControl() {
     delayControl.style.opacity = '1';
@@ -71,13 +69,17 @@ function SubtitlesInit(video,delayControl) {
     container.appendChild(overlay);
     overlay.appendChild(delayControl);
     showControl()
+    
     if(window.localStorage.getItem("delay")){
       delayControl.textContent = `Subtitle Delay: ${(window.localStorage.getItem('delay'))}s` 
       subtitleDelay = +window.localStorage.getItem('delay')
     }
     else{ 
       window.localStorage.setItem("delay",0)
+      subtitleDelay = 0;
+      delayControl.textContent = `Subtitle Delay: ${(window.localStorage.getItem('delay'))}s` 
     }
+
     function updateButton() {
       delayControl.textContent = `Subtitle Delay: ${subtitleDelay.toFixed(1)}s`;
     }
@@ -102,7 +104,6 @@ function SubtitlesInit(video,delayControl) {
     });
     function syncOverlay() {
       const rect = video.getBoundingClientRect();
-
       overlay.style.position = 'fixed';
       overlay.style.top = rect.top + 'px';
       overlay.style.left = rect.left + 'px';
@@ -111,8 +112,6 @@ function SubtitlesInit(video,delayControl) {
       overlay.style.zIndex = '9999';
     }
 
-    syncOverlay();
-
     const ro = new ResizeObserver(syncOverlay);
     ro.observe(video);
 
@@ -120,30 +119,29 @@ function SubtitlesInit(video,delayControl) {
     window.addEventListener('resize', syncOverlay);
     newov = document.createElement('div')
       Object.assign(newov.style, {
-    position:        'absolute',
-    left:            '50%',
-    bottom: "10%",
-    translate:       '-50% 0',
-    "white-space":   'nowrap',
-    display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-
-      textAlign: 'center',
-      // whiteSpace: 'pre-wrap', // better for subtitles
-      color: 'white',
-      fontSize: '1.4em',
-      pointerEvents: 'none',
-      fontFamily: '"Open Sans", "Helvetica", "Arial", sans-serif',
-      fontWeight: '400',
-      zIndex: '2147483647',
-      padding: '0 30px',
-      boxSizing: 'border-box',
-      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        position:        'absolute',
+        left:            '50%',
+        bottom: "10%",
+        translate:       '-50% 0',
+        "white-space":   'nowrap',
+        display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          // whiteSpace: 'pre-wrap', 
+          color: 'white',
+          fontSize: '1.4em',
+          pointerEvents: 'none',
+          fontFamily: '"Open Sans", "Helvetica", "Arial", sans-serif',
+          fontWeight: '400',
+          zIndex: '2147483647',
+          padding: '0 30px',
+          boxSizing: 'border-box',
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
   });
 
     overlay.appendChild(newov)
-
+    // syncOverlay()
     debug(`OVERLAY INJECTED — container: ${container.tagName}.${container.className.slice(0, 30)}`);
     video.addEventListener('timeupdate', () => {
       const ct = video.currentTime;
@@ -189,7 +187,9 @@ function SubtitlesInit(video,delayControl) {
         chrome.runtime.sendMessage({type:"SUB_SAVE" ,LocationId,arrofobj:msg.data,name:msg.name})
         debug(`SUBTITLES LOADED — ${msg.name}`);
       }
+
       if(msg?.action == 'custom'){
+
         if(msg?.spec == "delay"){
             if(msg?.type == 'Reset'){
               subtitleDelay = 0;
@@ -221,6 +221,7 @@ function SubtitlesInit(video,delayControl) {
             }
         }
         else if (msg?.spec == "subtitles"){
+
             if(msg?.type == 'Fontsize'){
               newov.style.fontSize = msg?.payload
             }else if(msg?.type == "Color"){
@@ -267,7 +268,6 @@ whenReady(() => {
 
 }
 else{
-
   waitForVideo((video)=>SubtitlesInit(video,delayControl))
 }}
 );
