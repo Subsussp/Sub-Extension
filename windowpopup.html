@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Subtitle Control Panel</title>
+
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&family=Inter:opsz,wght@14..32,100&display=swap');
 
   body {
     min-height: 100vh;
@@ -14,7 +16,7 @@
     align-items: center;
     justify-content: center;
     background: #0d0f14;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: "Inter", 'Segoe UI', system-ui, -apple-system, sans-serif;
     color: #c8cdd5;
     padding: 12px;
     overflow: hidden;
@@ -54,7 +56,6 @@
     font-size: 13px;
     font-weight: 700;
     letter-spacing: 1.5px;
-    text-transform: uppercase;
     color: #e0e4ea;
   }
 
@@ -116,7 +117,6 @@
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 2px;
-    text-transform: uppercase;
     color: #555a66;
   }
 
@@ -222,6 +222,7 @@
 
   .delay-btn {
     width: 34px;
+    line-height: 1;
     height: 34px;
     border-radius: 8px;
     border: 1px solid #2a2d36;
@@ -239,8 +240,8 @@
 
   .delay-btn:hover {
     background: #22252e;
-    border-color: #00b4d8;
-    color: #00b4d8;
+    border-color: #0f2d33;
+    color: #797d7e;
   }
 
   .delay-btn:active {
@@ -274,7 +275,6 @@ input[type=number]::-webkit-outer-spin-button {
     color: #555a66;
     font-size: 10px;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
     transition: color 0.15s;
@@ -372,8 +372,7 @@ input[type=number]::-webkit-outer-spin-button {
       .control-header label {
         font-size: 12px;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+            letter-spacing: 0.5px;
         color: #a5f3fc;
       }
 
@@ -471,22 +470,27 @@ input[type=number]::-webkit-outer-spin-button {
       .custom-color-input {
         position: absolute;
         inset: 0;
+        width: 100%;
+        height: 100%;
         opacity: 0;
         cursor: pointer;
       }
 
+
       .custom-color-display {
+        line-height: 1; 
         width: 100%;
         height: 100%;
-        border-radius: 8px;
-        border: 2px dashed rgba(255, 255, 255, 0.3);
+        text-align: center;
+        border-radius: 4px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 18px;
         font-weight: bold;
         color: rgba(255, 255, 255, 0.5);
-        transition: all 0.2s ease;
+        transition: all 0.4s ease-in-out;
         background: rgba(255, 255, 255, 0.02);
       }
 
@@ -509,9 +513,8 @@ input[type=number]::-webkit-outer-spin-button {
         font-size: 11px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        transition: all 0.4s ease-in-out;
+            letter-spacing: 0.5px;
       }
 
       .weight-btn:hover {
@@ -546,13 +549,13 @@ input[type=number]::-webkit-outer-spin-button {
         justify-content: center;
         font-size: 16px;
         font-weight: bold;
-        transition: all 0.2s ease;
+        transition: all 0.4s ease-in-out;
       }
 
       .delay-btn:hover {
         background: rgba(6, 182, 212, 0.2);
         border-color: rgba(6, 182, 212, 0.3);
-        transform: scale(1.08);
+        transform: scale(1.03);
       }
 
       .delay-display {
@@ -575,7 +578,6 @@ input[type=number]::-webkit-outer-spin-button {
         font-size: 10px;
         color: rgba(255, 255, 255, 0.5);
         margin-top: 4px;
-        text-transform: uppercase;
         letter-spacing: 0.5px;
       }
 
@@ -593,8 +595,7 @@ input[type=number]::-webkit-outer-spin-button {
         font-size: 11px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
-        text-transform: uppercase;
+        transition: all 0.4s ease-in-out;
         letter-spacing: 0.5px;
       }
 
@@ -603,38 +604,6 @@ input[type=number]::-webkit-outer-spin-button {
         border-color: rgba(255, 255, 255, 0.2);
       }
 
-      .preview-divider {
-        flex: 1 1 100%;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        padding-top: 20px;
-        margin-top: auto;
-      }
-
-      .preview-label {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.5);
-        margin-bottom: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-      }
-
-      .preview-box {
-        background: #0a0a14;
-        border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        min-height: 70px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
-      }
-
-      .preview-text {
-        transition: all 0.1s ease;
-      }
 </style>
 </head>
 <body>
@@ -696,8 +665,8 @@ input[type=number]::-webkit-outer-spin-button {
       </div>
       <button class="reset-btn" id="delay-reset">Reset</button>
     </div>
-      <span style="font-family: monospace;margin-top: -20px;">!Windows: alt + tab to shift between windows</span>
-      <span style="font-family: monospace;">!Mac: ⌘ + Tab to shift between windows</span>
+      <span style="font-family: monospace;margin-top: -20px;user-select: none;">!Windows: alt + tab to shift between windows</span>
+      <span style="font-family: monospace;user-select: none;">!Mac: ⌘ + Tab to shift between windows</span>
   </div>
 
   <div class="panel-footer">

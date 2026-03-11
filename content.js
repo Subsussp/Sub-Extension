@@ -1,7 +1,10 @@
 const isInsideIframe = window !== window.top;
-let subtitleDelay = 0; 
+let videoref ;
+let subtitlename = "" ;
+let lastVideoId;
 // Waiting for DOM
 function whenReady(fn) {
+
   if (document.body) return fn();
   const observer = new MutationObserver(() => {
     if (document.body) {
@@ -19,12 +22,20 @@ function whenReady(fn) {
 function waitForVideo(fn) {
   const v = document.querySelector('video');
   if (v) return fn(v);
-  const observer = new MutationObserver(() => {
+    const observer = new MutationObserver(() => {
     const v = document.querySelector('video');
-    if (v) { observer.disconnect(); fn(v); }
+    if (v) {observer.disconnect();fn(v);}
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
+
+let LocationId = window.location.href
+let subtitles = []
+let overlay; 
+let newov;
+let shouldload = true;
+let subtitleDelay = 0; 
+
 // Overlay
 function createOverlay() {
   const overlay = document.createElement('div');
@@ -36,14 +47,12 @@ function createOverlay() {
   });
   return overlay;
 }
-let LocationId = window.location.href
-let subtitles = []
-let overlay; 
-let newov;
+
 function debug(msg) {
   if (newov) newov.innerHTML = `${msg}`;
 }
 function SubtitlesInit(video,delayControl) {
+
     debug('VIDEO FOUND — injecting overlay into container...');
     function showControl() {
     delayControl.style.opacity = '1';
@@ -62,13 +71,13 @@ function SubtitlesInit(video,delayControl) {
       container.style.position = 'relative';
       debug(`container was static — fixed. tag: ${container.tagName}`);
     }
-
     document.body.removeChild(overlay);
     document.body.removeChild(delayControl);
 
     container.appendChild(overlay);
     overlay.appendChild(delayControl);
     showControl()
+
     
     if(window.localStorage.getItem("delay")){
       delayControl.textContent = `Subtitle Delay: ${(window.localStorage.getItem('delay'))}s` 
@@ -117,6 +126,7 @@ function SubtitlesInit(video,delayControl) {
 
     window.addEventListener('scroll', syncOverlay);
     window.addEventListener('resize', syncOverlay);
+
     newov = document.createElement('div')
       Object.assign(newov.style, {
         position:        'absolute',
@@ -132,7 +142,7 @@ function SubtitlesInit(video,delayControl) {
           color: 'white',
           fontSize: '1.4em',
           pointerEvents: 'none',
-          fontFamily: '"Open Sans", "Helvetica", "Arial", sans-serif',
+          fontFamily: 'Roboto',
           fontWeight: '400',
           zIndex: '2147483647',
           padding: '0 30px',
@@ -141,7 +151,7 @@ function SubtitlesInit(video,delayControl) {
   });
 
     overlay.appendChild(newov)
-    // syncOverlay()
+    syncOverlay()
     debug(`OVERLAY INJECTED — container: ${container.tagName}.${container.className.slice(0, 30)}`);
     video.addEventListener('timeupdate', () => {
       const ct = video.currentTime;
@@ -164,6 +174,8 @@ function SubtitlesInit(video,delayControl) {
 
     video.addEventListener("pause", () => {
         showControl()
+        subtitlename && debug(`SUBTITLES LOADED — ${subtitlename}`);
+
     });
 
     document.addEventListener("mousemove", () => {
@@ -173,75 +185,150 @@ function SubtitlesInit(video,delayControl) {
         timeout = setTimeout(hideControl, 2000);
     });
 
-    chrome.runtime.sendMessage({type:'SUB_GET',LocationId},(respnose)=>{
-       debug(`SUBTITLES LOADED — ${respnose.name}`);
-      if(respnose?.sub?.length > 0){
-        subtitles = respnose.sub
+  if( window.location.hostname.includes("youtube.com")){
+    if(shouldload){
+      shouldload = false
+      chrome.runtime.sendMessage({type:'SUB_GET',LocationId},(respnose)=>{
+        subtitlename = respnose.name
         debug(`SUBTITLES LOADED — ${respnose.name}`);
-      }
+        if(respnose?.sub?.length > 0){
+          subtitles = respnose.sub
+          debug(`SUBTITLES LOADED — ${respnose.name}`);
+        }
     })
-    // Listening for sub upload 
-    chrome.runtime.onMessage.addListener((msg,callback,sendResponse) => {
-      if (msg?.action === 'srtuploaded' && subtitles !== msg?.data) {
-        subtitles = msg.data;
-        chrome.runtime.sendMessage({type:"SUB_SAVE" ,LocationId,arrofobj:msg.data,name:msg.name})
-        debug(`SUBTITLES LOADED — ${msg.name}`);
-      }
+        // Listening for sub upload
+        chrome.runtime.onMessage.addListener((msg,callback,sendResponse) => {
+          if (msg?.action === 'srtuploaded' && subtitles !== msg?.data) {
+            let location = window.location.href
+            subtitles = msg.data;
+            chrome.runtime.sendMessage({type:"SUB_SAVE" ,location,arrofobj:msg.data,name:msg.name})
+            subtitlename = msg.name
+            debug(`SUBTITLES LOADED — ${msg.name}`);
+          }
 
-      if(msg?.action == 'custom'){
+          if(msg?.action == 'custom'){
 
-        if(msg?.spec == "delay"){
-            if(msg?.type == 'Reset'){
-              subtitleDelay = 0;
-              window.localStorage.setItem("delay",0)
-              updateButton();
-              showControl()
-              clearTimeout(timeout);
-              timeout = setTimeout(hideControl, 2000);
-            }
-            else if(msg?.type == 'Input'){
-              subtitleDelay = +(+msg.payload).toFixed(1);
-              window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
-              updateButton();
-              showControl()
-              clearTimeout(timeout);
-              timeout = setTimeout(hideControl, 2000);
-            }else{  
-              subtitleDelay = +((+subtitleDelay + +msg.payload).toFixed(1));
-              window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
-              updateButton();
-              showControl()
-              clearTimeout(timeout);
-              timeout = setTimeout(hideControl, 2000);
-            }
+            if(msg?.spec == "delay"){
+                if(msg?.type == 'Reset'){
+                  subtitleDelay = 0;
+                  window.localStorage.setItem("delay",0)
+                  updateButton();
+                  showControl()
+                  clearTimeout(timeout);
+                  timeout = setTimeout(hideControl, 2000);
+                }
+                else if(msg?.type == 'Input'){
+                  subtitleDelay = +(+msg.payload).toFixed(1);
+                  window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
+                  updateButton();
+                  showControl()
+                  clearTimeout(timeout);
+                  timeout = setTimeout(hideControl, 2000);
+                }else{  
+                  subtitleDelay = +((+subtitleDelay + +msg.payload).toFixed(1));
+                  window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
+                  updateButton();
+                  showControl()
+                  clearTimeout(timeout);
+                  timeout = setTimeout(hideControl, 2000);
+                }
 
-            if(sendResponse){
-              sendResponse({ delay: subtitleDelay });
-              return true
+                if(sendResponse){
+                  sendResponse({ delay: subtitleDelay });
+                  return true
+                }
             }
-        }
-        else if (msg?.spec == "subtitles"){
+            else if (msg?.spec == "subtitles"){
 
-            if(msg?.type == 'Fontsize'){
-              newov.style.fontSize = msg?.payload
-            }else if(msg?.type == "Color"){
-              newov.style.color = msg?.payload
-            }else if(msg?.type == "Position"){
-                newov.style.bottom = msg?.payload
-            }else if(msg?.type == "Weight"){
-                newov.style.fontWeight = +msg?.payload
+                if(msg?.type == 'Fontsize'){
+                  newov.style.fontSize = msg?.payload
+                }else if(msg?.type == "Color"){
+                  newov.style.color = msg?.payload
+                }else if(msg?.type == "Position"){
+                    newov.style.bottom = msg?.payload
+                }else if(msg?.type == "Weight"){
+                    newov.style.fontWeight = +msg?.payload
+                }
             }
-        }
-        sendResponse({ statue: "ok" });
-      }
-    });
+            sendResponse({ statue: "ok" });
+          }
+        });
   }
+  }else{
+        chrome.runtime.sendMessage({type:'SUB_GET',LocationId},(respnose)=>{
+            subtitlename = respnose.name
+            debug(`SUBTITLES LOADED — ${respnose.name}`);
+            if(respnose?.sub?.length > 0){
+              subtitles = respnose.sub
+              debug(`SUBTITLES LOADED — ${respnose.name}`);
+            }
+        })
+        // Listening for sub upload
+        chrome.runtime.onMessage.addListener((msg,callback,sendResponse) => {
+          if (msg?.action === 'srtuploaded' && subtitles !== msg?.data) {
+            subtitles = msg.data;
+            chrome.runtime.sendMessage({type:"SUB_SAVE" ,LocationId,arrofobj:msg.data,name:msg.name})
+            subtitlename = msg.name
+            debug(`SUBTITLES LOADED — ${msg.name}`);
+          }
 
+          if(msg?.action == 'custom'){
+
+            if(msg?.spec == "delay"){
+                if(msg?.type == 'Reset'){
+                  subtitleDelay = 0;
+                  window.localStorage.setItem("delay",0)
+                  updateButton();
+                  showControl()
+                  clearTimeout(timeout);
+                  timeout = setTimeout(hideControl, 2000);
+                }
+                else if(msg?.type == 'Input'){
+                  subtitleDelay = +(+msg.payload).toFixed(1);
+                  window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
+                  updateButton();
+                  showControl()
+                  clearTimeout(timeout);
+                  timeout = setTimeout(hideControl, 2000);
+                }else{  
+                  subtitleDelay = +((+subtitleDelay + +msg.payload).toFixed(1));
+                  window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
+                  updateButton();
+                  showControl()
+                  clearTimeout(timeout);
+                  timeout = setTimeout(hideControl, 2000);
+                }
+
+                if(sendResponse){
+                  sendResponse({ delay: subtitleDelay });
+                  return true
+                }
+            }
+            else if (msg?.spec == "subtitles"){
+
+                if(msg?.type == 'Fontsize'){
+                  newov.style.fontSize = msg?.payload
+                }else if(msg?.type == "Color"){
+                  newov.style.color = msg?.payload
+                }else if(msg?.type == "Position"){
+                    newov.style.bottom = msg?.payload
+                }else if(msg?.type == "Weight"){
+                    newov.style.fontWeight = +msg?.payload
+                }
+            }
+            sendResponse({ statue: "ok" });
+          }
+        });
+  }
+  }
 function getActiveCue(time) {
   return subtitles.find(s => (time + +subtitleDelay) >= s.start && (time + +subtitleDelay) <= s.end);
 }
 
 whenReady(() => {
+  if (overlay && overlay.parentNode) {
+    overlay.parentNode.removeChild(overlay);
+  }
   overlay = createOverlay();
   document.body.appendChild(overlay);
   const delayControl = document.createElement('div');
@@ -261,13 +348,43 @@ whenReady(() => {
   delayControl.style.pointerEvents = 'none';
   document.body.appendChild(delayControl);
   if (isInsideIframe) {
+      debug('INSIDE IFRAME — looking for video...');
 
-  debug('INSIDE IFRAME — looking for video...');
- 
-  waitForVideo((video)=>SubtitlesInit(video,delayControl));
-
+      waitForVideo((video)=>SubtitlesInit(video,delayControl))
 }
 else{
   waitForVideo((video)=>SubtitlesInit(video,delayControl))
 }}
 );
+if( window.location.hostname.includes("youtube.com")){
+  lastVideoId = new URL(location.href).searchParams.get("v");
+  setInterval(() => {
+    const videoId = new URL(location.href).searchParams.get("v");
+    if (videoId && videoId !== lastVideoId) {
+      lastVideoId = videoId;
+       if (overlay && overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+      overlay = createOverlay();
+      document.body.appendChild(overlay);
+      const delayControl = document.createElement('div');
+      delayControl.style.position = 'absolute';
+      delayControl.style.top = '2%';
+      delayControl.style.right = '2%';
+      delayControl.style.minWidth = '40px';
+      delayControl.style.background = 'rgba(255, 0, 0, 0.7)';
+      delayControl.style.color = 'white';
+      delayControl.style.padding = '8px 12px';
+      delayControl.style.borderRadius = '6px';
+      delayControl.style.fontSize = '16px';
+      delayControl.style.cursor = 'pointer';
+      delayControl.style.zIndex = 99999;
+      delayControl.style.opacity = '0';
+      delayControl.style.visibility = 'hidden';
+      delayControl.style.pointerEvents = 'none';
+      document.body.appendChild(delayControl);
+      let nvideo = document.querySelector('video')
+      waitForVideo(video => SubtitlesInit(nvideo, delayControl));
+    }
+  }, 500);
+}
