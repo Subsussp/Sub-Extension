@@ -1,7 +1,11 @@
 const isInsideIframe = window !== window.top;
+
 let subtitleDelay = 0; 
 // Waiting for DOM
 function whenReady(fn) {
+  if (window.__MY_EXTENSION_INJECTED__) return;
+
+  window.__MY_EXTENSION_INJECTED__ = true;
   if (document.body) return fn();
   const observer = new MutationObserver(() => {
     if (document.body) {
