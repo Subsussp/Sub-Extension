@@ -24,19 +24,26 @@ function Timestamp(time){
 let timer;
 let query;
 let season;
-
+let comment = document.getElementById('comment')
+let searchinput = document.getElementById('subsearch')
 const ul = document.getElementById('list');
 
-
-document.getElementById('subsearch').addEventListener(('input'), (e)=>{
+searchinput.addEventListener(('input'), (e)=>{
   query = e.target.value
   fetchsub()
 })
 function fetchsub() {
     clearTimeout(timer)
+    if(query?.length < 1){
+      comment.style.opacity = 0
+      document.getElementById('inplace').style.animation = "Lftright 8s linear infinite"
+      document.getElementById('inplace').style.opacity = 1
+      return
+  }
+        document.getElementById('inplace').style.animation = "none"
+      document.getElementById('inplace').style.opacity = 0
     if(query?.length < 2)return
     timer = setTimeout(async()=> {
-    // if(season){
   const res = await fetch(
     `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(query)}`,
     {
@@ -49,8 +56,11 @@ function fetchsub() {
 
   const data = await res.json();
   ul.innerHTML = ''
-
-  data.results.map((show,)=>{
+  if(data.results.length < 1){
+      comment.style.opacity = 1 
+  }
+  data.results.map((show,i)=>{
+      comment.style.opacity = 0
       const li = document.createElement("li");
       const card = document.createElement("button");
       card.style.display = "flex";
@@ -106,52 +116,11 @@ function fetchsub() {
       ul.parentElement.style.display = 'block'
       ul.appendChild(card)
   })
-      if(data.status){
-        
-        console.log(data)
-        // data.subtitles.map((item,i)=>{
-        //   const li = document.createElement("li");
-        //   const button = document.createElement("button");
-        //   const div = document.createElement("div");
-        //   // button.textContent = item.name
-        //   button.addEventListener("click",async (e)=>{
-        //     // let sub =await 
-        //     extractSubtitle(item.url)
-        //     // console.log(sub)
-        //   })
-        //   div.textContent = item.episode_from + " " + item.episode_end
-        //   li.style.margin = "0";
-        //   li.style.padding = "0";
-        //   li.appendChild(button)
-        //   li.appendChild(div)
-        //   ul.appendChild(li)
-        // })
-      }
-    // }
+ 
 
   },400)
 }
 
-// async function extractSubtitle(zipUrl){
-//   const fullUrl = "https://dl.subdl.com" + zipUrl;
-//   const res = await fetch(fullUrl);
-//   const blob = await res.blob();
-
-//   const zip = await JSZip.loadAsync(blob);
-
-//   console.log(zip)
-//   for (const name of Object.keys(zip.files)) {
-//     // if (name.endsWith(".srt")) {
-
-//     //   const srt = await zip.files[name].async("string");
-
-//     //   return srt;
-
-//     // }
-
-//   }
-
-// }
 
 reader.onload = (e) => {
     const text = e.target.result;

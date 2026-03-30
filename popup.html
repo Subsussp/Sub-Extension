@@ -53,6 +53,8 @@
         #results{
             width:800px;
             padding: 2px;
+            background-color: white;
+            z-index: 300;
         }
 
         .container{
@@ -81,21 +83,15 @@
             width: 26px;
             height: 39px;
             z-index: 20;
-        }      
+        }
+
         #inplace {
-            transform: translateY(-50%) translateX(0%);
-            animation: Lftright 5s ease-out infinite ; 
+            animation: Lftright 8s linear infinite ; 
         }
-        #subsearch:focus{
-            background-color: #00ffd5;
-        }
+
         @keyframes Lftright {
-            0%{
-                transform: translateY(-50%)  translateX(-200%);
-                opacity: 1;
-            }
-            100%{
-                transform: translateY(-50%) translateX(100%);
+            to{
+                transform: translateY(-50%) translateX(110%);
             }
         }
     </style>
@@ -111,7 +107,8 @@
         <div style="width: 250px;height: 100%;">            
             <input type="file" id="file" accept=".srt" style="display: none;">
             <div id="searchcont" style="margin-top:0.5rem;width: 100%;display: flex;justify-content: center;position: relative;">
-                <label id="inplace" style="position: absolute;top: 50%;left: 50%;transform: translate(-50%,-50%);width: 100%;text-align: center;color: #A9A9A9;pointer-events: none;margin-top: -0.05rem;">Search TV show , Movie or series</label>
+                <label id="comment" style="position: absolute;top: 50%;left: 73%;transform: translate(-50%,-50%);width: 100%;text-align: center;color: #ff000073;pointer-events: none;margin-top: -0.05rem;font-size: 10px;font-weight: bold;opacity: 0;">Nothing Found</label>
+                <label id="inplace" style="position: absolute;top: 50%;left: -30%;transform: translate(-50%,-50%);width: 100%;text-align: center;color: #A9A9A9;pointer-events: none;margin-top: -0.05rem;">Search movies and TV shows</label>
                 <input type="text" id="subsearch" style="outline: none;border: 2px solid black;padding: 10px 20px 10px 5px ;background-color: transparent;position: relative;">
             </div>
             <div style="width: 250px; gap: 10px;height:250px;display: flex;justify-content:flex-start;align-items: center;flex-direction: column;">
