@@ -1,7 +1,5 @@
 Getting both tv shows and movies from tmdb
-fixing the parent_imdb_id issue 
-sending the episode number and session number
-sorting by language 
 fixing the results 
 fixing chat gpt design
 hosting the backend 
+Change the animation and use an elemen instead of the ::after

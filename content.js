@@ -35,6 +35,8 @@ let overlay;
 let newov;
 let shouldload = true;
 let subtitleDelay = 0; 
+let timeout;
+let hover = false;
 
 // Overlay
 function createOverlay() {
@@ -166,7 +168,6 @@ function SubtitlesInit(video,delayControl) {
         newov.innerHTML = ``;
       }     
     });
-    let timeout;
 
     video.addEventListener("playing", () => {
         hideControl();
@@ -180,9 +181,11 @@ function SubtitlesInit(video,delayControl) {
 
     document.addEventListener("mousemove", () => {
         showControl()
-
         clearTimeout(timeout);
-        timeout = setTimeout(hideControl, 2000);
+        console.log(hover)
+        if(!hover){
+          timeout = setTimeout(hideControl, 2000);
+        }
     });
 
   if( window.location.hostname.includes("youtube.com")){
@@ -215,7 +218,9 @@ function SubtitlesInit(video,delayControl) {
                   updateButton();
                   showControl()
                   clearTimeout(timeout);
-                  timeout = setTimeout(hideControl, 2000);
+                  if(!hover){
+                    timeout = setTimeout(hideControl, 2000);
+                  }
                 }
                 else if(msg?.type == 'Input'){
                   subtitleDelay = +(+msg.payload).toFixed(1);
@@ -223,14 +228,18 @@ function SubtitlesInit(video,delayControl) {
                   updateButton();
                   showControl()
                   clearTimeout(timeout);
-                  timeout = setTimeout(hideControl, 2000);
+                                    if(!hover){
+                    timeout = setTimeout(hideControl, 2000);
+                  }
                 }else{  
                   subtitleDelay = +((+subtitleDelay + +msg.payload).toFixed(1));
                   window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
                   updateButton();
                   showControl()
                   clearTimeout(timeout);
-                  timeout = setTimeout(hideControl, 2000);
+                                    if(!hover){
+                    timeout = setTimeout(hideControl, 2000);
+                  }
                 }
 
                 if(sendResponse){
@@ -281,7 +290,9 @@ function SubtitlesInit(video,delayControl) {
                   updateButton();
                   showControl()
                   clearTimeout(timeout);
-                  timeout = setTimeout(hideControl, 2000);
+                                    if(!hover){
+                    timeout = setTimeout(hideControl, 2000);
+                  }
                 }
                 else if(msg?.type == 'Input'){
                   subtitleDelay = +(+msg.payload).toFixed(1);
@@ -289,14 +300,18 @@ function SubtitlesInit(video,delayControl) {
                   updateButton();
                   showControl()
                   clearTimeout(timeout);
-                  timeout = setTimeout(hideControl, 2000);
+                                    if(!hover){
+                    timeout = setTimeout(hideControl, 2000);
+                  }
                 }else{  
                   subtitleDelay = +((+subtitleDelay + +msg.payload).toFixed(1));
                   window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
                   updateButton();
                   showControl()
                   clearTimeout(timeout);
-                  timeout = setTimeout(hideControl, 2000);
+                                    if(!hover){
+                    timeout = setTimeout(hideControl, 2000);
+                  }
                 }
 
                 if(sendResponse){
@@ -345,8 +360,25 @@ whenReady(() => {
   delayControl.style.zIndex = 99999;
   delayControl.style.opacity = '0';
   delayControl.style.visibility = 'hidden';
+  delayControl.style.userSelect = 'none';
   delayControl.style.pointerEvents = 'none';
   document.body.appendChild(delayControl);
+  delayControl.addEventListener('mouseenter',()=>{
+    hover = true
+    console.log(hover )
+    clearTimeout(timeout)
+      delayControl.style.opacity = '1';
+      delayControl.style.visibility = 'visible';
+      delayControl.style.pointerEvents = 'auto';
+    })
+    delayControl.addEventListener("mouseleave",()=>{
+      hover = false
+      clearTimeout(timeout)
+
+      delayControl.style.opacity = '0';
+      delayControl.style.visibility = 'hidden';
+      delayControl.style.pointerEvents = 'none';
+  })
   if (isInsideIframe) {
       debug('INSIDE IFRAME — looking for video...');
 
