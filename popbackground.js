@@ -39,11 +39,13 @@ const ul = document.getElementById('list');
       searchinput.value = result.searchtitle
       query = result.searchtitle
       ul.innerHTML = ''
+      console.log(result.searchdata)
       appenData(result.searchdata)
       comment.style.opacity = 0
       document.getElementById('inplace').style.animation = "none"
       document.getElementById('inplace').style.opacity = 0
   })
+
 }
 Checkstorage()
 
@@ -329,71 +331,111 @@ function appendresult(show,i){
     }
 function appenData(data){
     const catg = document.createElement("div");
-    let buttn = document.createElement("button")
-    buttn.style.cssText =` padding: 5px 10px;background-color:#2e2e3a;border:none;color:white;font-family: cursive;border: 1px solid black;border-radius: 8px`
-    buttn.innerText = "All"
-    buttn.className = "buttn"
-    let buttn1 = document.createElement("button")
-    buttn1.style.cssText =`padding: 5px 10px;background-color:#5863F8;border:none;color:white;font-family: cursive;border: 1px solid black;border-radius: 8px`
-    buttn1.innerText = "Tv shows"
-    buttn1.className = "buttn1"
-    let buttn2 = document.createElement("button")
-    buttn2.style.cssText =`padding: 5px 10px;background-color:#5863F8;border:none;color:white;font-family: cursive;border: 1px solid black;border-radius: 8px`
-    buttn2.innerText = "Movies"
-    buttn2.className = "buttn2"
+    const line = document.createElement("div");
+    const after = document.createElement("div");
+    line.style.cssText = "margin-top:-7px;width:100%;height:2px;background-color:grey;"
+    after.className = "after"
+    catg.appendChild(after)
+    catg.style.position = "relative";
+    let text = ["All","Tv shows","Movies"]
+    let classes = ["buttn","buttn1","buttn2"]
+    let wrappers = []
+    let buttons = []
+
     catg.style.display = 'flex'
     catg.style.padding = '10px 0px 0px 0px'
     catg.style.width = "100%"
     catg.style.gap = '9px'
+    text.forEach((text,i)=>{
+      let buttn = document.createElement("button")
+      buttn.style.cssText =` padding: 5px 10px;background-color:#5863F8;color:white;font-family: cursive;  border-top: 2px solid black;
+      border-bottom: 2px solid black;
+        border-right: none;
+      border-left: none;
+      border-radius: 8px`
+      buttn.innerText = text
+      buttn.className = classes[i]
+      const wrapper = document.createElement("span");
+      wrapper.style.cssText =`display: inline-flex;justify-content: center;align-items: center;padding: 5px 10px;opacity:0;width:max-content;pointer-events: none;z-index:50;top:50%;left:0;background-color:#2e2e3a;transform: translate(0, -50%);color:white;font-family: cursive;
+        border-top: 2px solid black;
+  border-bottom: 2px solid black;
+  border-right: none;
+  border-left: none;
+  border-radius: 8px;transition: all 1200ms ease-in-out;`
+      wrapper.innerText = text
+      wrapper.className = `.wrapper${i}`
+      wrapper.style.position = "absolute"
+      function playAnimation(el, className) {
+          el.classList.remove(
+            'phase',
+            'phase2',
+            'Phasereverse',
+            'Phase2reverse'
+          );
+
+          requestAnimationFrame(() => {
+            el.classList.add(className);
+          });
+      }
       buttn.addEventListener("click",(b)=>{
-        buttn.style.animation = `focus 1200ms ease-in-out forwards`
-        catg.childNodes.forEach((v)=>{
-          if(v != b.target){
-            v.style.animation = null
-            v.style.animation = `unfocus 1200ms ease-in-out forwards`
-            v.classList.add("active");
+        wrapper.classList.remove('unfocus')
+        wrapper.classList.add('focus')
+        if(i ==0){
+            after.style.background = "linear-gradient(107deg,rgba(46, 46, 58, 0.91) 0%, rgba(88, 99, 248, 1) 62%)"
+          if(after.classList.contains('phase2')){
+            after.classList.remove("phase2");
+            playAnimation(after,'Phase2reverse')
+            setTimeout(()=>{
+              playAnimation(after,'Phasereverse')
+            },1200)
+          }
+          if(after.classList.contains('phase') || after.classList.contains('Phase2reverse')){
+            after.classList.remove("phase","Phase2reverse");
+            playAnimation(after,'Phasereverse')
+          }
+        }
+        if(i ==1){
+          if(after.classList.contains('phase2')){
+            after.style.background = "linear-gradient(107deg,rgba(46, 46, 58, 0.91) 0%, rgba(88, 99, 248, 1) 62%)"
+            after.classList.remove("phase2");
+            playAnimation(after,'Phase2reverse')
+          }
+          else if(!after.classList.contains('phase')){
+            after.style.background = "linear-gradient(107deg,rgba(88, 99, 248, 1) 0%, rgba(46, 46, 58, 0.91) 62%)"
+            playAnimation(after,'phase')
+          }
+        }
+        if(i ==2){
+          after.style.background = "linear-gradient(107deg,rgba(88, 99, 248, 1) 0%, rgba(46, 46, 58, 0.91) 62%)"
+
+          if(after.classList.contains('phase')){
+            after.classList.remove("phase","phase2");
+            playAnimation(after,'phase2')
+          }
+          else if(!after.classList.contains('phase')){
+            playAnimation(after,'phase')
+            setTimeout(()=>{
+              playAnimation(after,'phase2')
+            },1200)
+          }
+        }
+        
+        wrappers.forEach((v,g)=>{
+          if(v.classList.contains('focus') && i != g){
+            v.classList.remove('focus')
+            v.classList.add('unfocus')
           }
         })
-      buttn.classList.remove("active");
 
       })
-      buttn1.addEventListener("click",(b)=>{
-        buttn1.style.animation = `focus 1200ms ease-in-out forwards`
-        catg.childNodes.forEach((v)=>{
-          console.log(v )
-          console.log(v.style.backgroundColor  )
-          console.log(v != b.target)
-          if(v != b.target && v.style.backgroundColor != 'rgb(88, 99, 248)'){
-            v.style.animation = null
-            v.style.animation = `unfocus 1200ms ease-in-out forwards`
-            if(v == buttn){
-            v.classList.add("active");
-            }else{
-              buttn1.classList.remove("active");
-              buttn1.classList.add("reverse")
-            }
-          }
-        })
-      })
-      
-      buttn2.addEventListener("click",(b)=>{
-        buttn2.style.animation = `focus 1200ms ease-in-out forwards`
-        catg.childNodes.forEach((v)=>{
-          if(v != b.target){
-            v.style.animation = null
-            v.style.animation = `unfocus 1200ms ease-in-out forwards`
-            v.classList.add("active");
-          }
-        })
-      buttn2.classList.remove("active");
-
-      })
-
-    catg.appendChild(buttn)
-    catg.appendChild(buttn1)
-    catg.appendChild(buttn2)
-
+      buttn.appendChild(wrapper)
+      wrappers.push(wrapper)
+      buttons.push(buttn)
+      catg.appendChild(buttn)
+    })
+    wrappers[0].classList.add('focus')
     ul.appendChild(catg)
+    ul.appendChild(line)
   data.map((show,i)=>appendresult(show,i))
 }
 

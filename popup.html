@@ -62,40 +62,44 @@
             /* gap: 20px; */
             background-color: transparent;
         }
-        .buttn{
-            position: relative;            
-         }
-        .buttn::after,.buttn1::after{
-            content: "";
-            right: 0%;
-            top: 50%;
-            transform-origin: center;
-            transform: translate(-50%,-50%);
-            position: absolute;
-            display: inline-block;
-            background: #2E2E3A;
-            background: linear-gradient(107deg,rgba(46, 46, 58, 1) 0%, rgba(88, 99, 248, 1) 62%);
-            width: 35px;
-            height: 29px;
-            z-index: -20;
-            display: none;
-        }
-        .buttn.active::after,
-        .buttn1.active::after{
-            display: block;
-            animation: animation2 1200ms ease-in-out forwards;
-        }
-        .buttn.reverse::after,
-        .buttn1.reverse::after{
-            display: block;
-            animation: animation2 1200ms ease-in-out reverse forwards;
+        .buttn,.buttn1,.buttn2{
+            position: relative;
+            transition: all 1200ms ease-in-out;
         }
 
-        .buttn1{
-            position: relative;
+        .after{
+            left: 1%;
+            margin-top: 0.5px;
+            transform-origin: center;
+            position: absolute;
+            display: inline-block;
+            background: linear-gradient(107deg,rgba(46, 46, 58, 1) 0%, rgba(88, 99, 248, 1) 62%);
+            width: 30px;
+            height: 31px;
+            z-index: -20;
+            animation-duration: 1200ms;
+            animation-timing-function: ease-in-out;
         }
-        .buttn2{
-            position: relative;
+        .after.phase{
+            animation-name: animation2!important;
+            animation-fill-mode: forwards;
+        }
+        .after.phase2{
+            animation-name: animation3!important;
+            animation-fill-mode: forwards;
+
+        }
+        .after.Phasereverse{
+            animation-name: animation2rev!important;
+        }
+        .after.Phase2reverse{
+            animation-name: animation3rev!important;
+        }
+        .focus{
+           opacity: 1!important;
+        }
+        .unfocus{
+           opacity: 0!important;
         }
         #arrow-back{
             display: none;
@@ -216,9 +220,26 @@
         background: #5e35b1;
         }
 
+        @keyframes animation2rev {
+            0%{
+                transform: translateY(0) translateX(160%);
+                border-radius: 2px;
+            }
+            20%{
+                transform: translateY(0) translateX(100%);
+
+            }
+            50%{
+                border-radius: 30px;
+            }
+            100%{
+                transform: translateY(0) translateX(0);
+                border-radius: 2px;
+            }
+        }
         @keyframes animation2 {
             0%{
-                transform: translateY(-50%) translateX(0);
+                transform: translateY(0) translateX(0);
                 border-radius: 2px;
 
             }
@@ -226,26 +247,45 @@
                 border-radius: 30px;
             }
             80%{
-                transform: translateY(-50%) translateX(100%);
+                transform: translateY(0) translateX(100%);
 
             }
             100%{
-                transform: translateY(-50%) translateX(160%);
+                transform: translateY(0) translateX(160%);
                 border-radius: 2px;
             }
         }
-        @keyframes focus {
-            to{
-                background-color: #2e2e3a;
-            }
-        }
-        @keyframes unfocus {
-            from{
-                background-color: #2e2e3a;
+        @keyframes animation3rev {
+            0%{
+                 transform: translateY(0) translateX(420%);
+                border-radius: 2px;
 
             }
-            to{
-                background-color:  #5863F8;
+            20%{
+                transform: translateY(0) translateX(320%);
+
+            }
+            50%{
+                border-radius: 30px;
+            }
+            100%{
+                transform: translateY(0) translateX(200%);
+                border-radius: 2px;
+            }
+        }
+        @keyframes animation3 {
+            0%{
+                transform: translateY(0) translateX(270%);
+                border-radius: 2px;
+
+            }
+            50%{
+                border-radius: 30px;
+            }
+
+            100%{
+                transform: translateY(0) translateX(445%);
+                border-radius: 2px;
             }
         }
 
