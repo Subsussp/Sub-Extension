@@ -28,34 +28,184 @@ let epTimer;
 let sessionTimer;
 let subtitles;
 let query;
+let temptvshows ;
+let tempmovies ;
+let tempcatg ;
 let season;
 let arrow = document.getElementById('arrow-back')
 let comment = document.getElementById('comment')
 let searchinput = document.getElementById('subsearch')
 const ul = document.getElementById('list');
-
  function Checkstorage(){
-  let searchtitle = chrome.storage.local.get(["searchtitle","searchdata"]).then((result)=>{
+  let searchtitle = chrome.storage.local.get(["searchtitle","searchdata","tvshows","movies","catg"]).then((result)=>{
       searchinput.value = result.searchtitle
       query = result.searchtitle
       ul.innerHTML = ''
-      console.log(result.searchdata)
-      appenData(result.searchdata)
-      comment.style.opacity = 0
+
+      tempcatg = result.catg
+      temptvshows = result.tvshows 
+      tempmovies = result.movies
+      console.log(result)
+      if(!result.catg){
+        chrome.storage.local.set({catg:"All"})
+        CreateNav(0)
+        appenData(result.searchdata)
+      }
+      else if(result.catg == "All" && result.searchdata.length > 0){
+        CreateNav(0)
+        comment.style.opacity = 0  
+        appenData(result.searchdata)
+      }
+      else if(result.catg == "Tv shows" && result.tvshows.results?.length > 0){
+        CreateNav(1)
+        comment.style.opacity = 0
+        appenData(result.tvshows.results)
+      }
+      else if(result.catg == "Movies" && result.movies.results?.length > 0){
+        CreateNav(2)
+        comment.style.opacity = 0
+        appenData(result.movies.results)
+      }
       document.getElementById('inplace').style.animation = "none"
       document.getElementById('inplace').style.opacity = 0
   })
 
 }
+
 Checkstorage()
 
+function CreateNav(focusIndex){
+  const catg = document.createElement("div");
+  const line = document.createElement("div");
+  const after = document.createElement("div");
+  let anim= ["phase","phase2"]
+  line.style.cssText = "margin-top:-7px;width:100%;height:2px;background-color:grey;"
+  after.className = "after"
+  catg.appendChild(after)
+  catg.style.position = "relative";
+  let text = ["All","Tv shows","Movies"]
+  let classes = ["buttn","buttn1","buttn2"]
+  let wrappers = []
+  let buttons = []
+  catg.style.display = 'flex'
+  catg.style.padding = '10px 0px 0px 0px'
+  catg.style.width = "100%"
+  catg.style.gap = '9px'
+  text.forEach((text,i)=>{
+    let buttn = document.createElement("button")
+    buttn.style.cssText =` padding: 5px 10px;background-color:#5863F8;color:white;font-family: cursive;  border-top: 2px solid black;
+    border-bottom: 2px solid black;
+    border-right: none;
+    border-left: none;
+    border-radius: 8px`
+    buttn.innerText = text
+    buttn.className = classes[i]
+    const wrapper = document.createElement("span");
+    wrapper.style.cssText =`display: inline-flex;justify-content: center;align-items: center;padding: 5px 10px;opacity:0;width:max-content;pointer-events: none;z-index:50;top:50%;left:0;background-color:#2e2e3a;transform: translate(0, -50%);color:white;font-family: cursive;
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+    border-right: none;
+    border-left: none;
+    border-radius: 8px;transition: all 1200ms ease-in-out;`
+    wrapper.innerText = text
+    wrapper.className = `.wrapper${i}`
+    wrapper.style.position = "absolute"
+    function playAnimation(el, className) {
+        el.classList.remove(
+          'phase',
+          'phase2',
+          'Phasereverse',
+          'Phase2reverse'
+        );
+        requestAnimationFrame(() => {
+          el.classList.add(className);
+        });
+    }
+    buttn.addEventListener("click",(b)=>{
+
+      wrapper.classList.remove('unfocus')
+      wrapper.classList.add('focus')
+      if(i ==0){
+        if(tempcatg != "All"){
+          chrome.storage.local.set({catg:"All"})
+          tempcatg = "All"
+          ul.querySelectorAll('li').forEach((item)=>item.remove())
+          appenData([...temptvshows.results,...tempmovies.results])
+        }
+          after.style.background = "linear-gradient(107deg,rgba(46, 46, 58, 0.91) 0%, rgba(88, 99, 248, 1) 62%)"
+        if(after.classList.contains('phase2')){
+          after.classList.remove("phase2");
+          playAnimation(after,'Phase2reverse')
+          setTimeout(()=>{
+            playAnimation(after,'Phasereverse')
+          },1200)
+        }
+        if(after.classList.contains('phase') || after.classList.contains('Phase2reverse')){
+          after.classList.remove("phase","Phase2reverse");
+          playAnimation(after,'Phasereverse')
+        }
+      }
+      if(i ==1){
+        if(tempcatg != "Tv shows"){
+          chrome.storage.local.set({catg:"Tv shows"})
+          tempcatg = "Tv shows"
+          ul.querySelectorAll('li').forEach((item)=>item.remove())
+          appenData(temptvshows.results)
+        }
+        if(after.classList.contains('phase2')){
+          after.style.background = "linear-gradient(107deg,rgba(46, 46, 58, 0.91) 0%, rgba(88, 99, 248, 1) 62%)"
+          after.classList.remove("phase2");
+          playAnimation(after,'Phase2reverse')
+        }
+        else if(!after.classList.contains('phase')){
+          after.style.background = "linear-gradient(107deg,rgba(88, 99, 248, 1) 0%, rgba(46, 46, 58, 0.91) 62%)"
+          playAnimation(after,'phase')
+        }
+      }
+      if(i ==2){
+         if(tempcatg != "Movies"){
+          chrome.storage.local.set({catg:"Movies"})
+          tempcatg = "Movies"
+          ul.querySelectorAll('li').forEach((item)=>item.remove())
+          appenData(tempmovies.results)
+        }
+        after.style.background = "linear-gradient(107deg,rgba(88, 99, 248, 1) 0%, rgba(46, 46, 58, 0.91) 62%)"
+        if(after.classList.contains('phase')){
+          after.classList.remove("phase","phase2");
+          playAnimation(after,'phase2')
+        }
+        else if(!after.classList.contains('phase')){
+          playAnimation(after,'phase')
+          setTimeout(()=>{
+            playAnimation(after,'phase2')
+          },1200)
+        }
+      }
+      wrappers.forEach((v,g)=>{
+        if(v.classList.contains('focus') && i != g){
+          v.classList.remove('focus')
+          v.classList.add('unfocus')
+        }
+      })
+
+    })
+    buttn.appendChild(wrapper)
+    wrappers.push(wrapper)
+    buttons.push(buttn)
+    catg.appendChild(buttn)
+  })
+  focusIndex != 0 && after.classList.add(anim[focusIndex - 1])
+
+  wrappers[focusIndex].classList.add('focus')
+  ul.appendChild(catg)
+  ul.appendChild(line)
+}
 searchinput.addEventListener(('input'), (e)=>{
   query = e.target.value
   fetchTvshowMv()
 })
 arrow.addEventListener("click",()=>{
   Checkstorage()
-
 })
 async function fetchSub(name,imdb_id,tmdb_id,year,session,episode){
   let fetchdata = await fetch(`http://localhost:3000/api?q=${name}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&episode=${episode}&session=${session}`) 
@@ -66,7 +216,7 @@ function appendresult(show,i){
     state = "All"
     arrow.style.display = 'none';
     comment.style.opacity = 0
-
+    let isTv = show?.media_type == "tv"
     const li = document.createElement("li");
     const card = document.createElement("button");
     card.style.display = "flex";
@@ -80,8 +230,8 @@ function appendresult(show,i){
     card.style.width = "200px";
     card.style.cursor = "pointer"
     const img = document.createElement("img");
-    img.src = `https://image.tmdb.org/t/p/w92${show.poster_path}`;
-    img.alt = show.name;
+    show.poster_path && (img.src = `https://image.tmdb.org/t/p/w92${show.poster_path}`)
+    img.alt = isTv ?show.name :show.original_title;
     img.style.width = "60px";
     img.style.height = "90px";
     img.style.borderRadius = "4px";
@@ -91,16 +241,16 @@ function appendresult(show,i){
     info.style.flexDirection = "column";
     info.style.gap = "4px"
     const title = document.createElement("div");
-    title.textContent = show.name;
+    title.textContent = isTv ?show.name :show.original_title;
     title.style.fontWeight = "bold";
     info.appendChild(title)
     const year = document.createElement("div");
-    year.textContent = show.first_air_date.split("-")[0]; 
+     isTv ? (year.textContent = show.first_air_date.split("-")[0]) :  (year.textContent = show?.release_date && show?.release_date.split("-")[0])
     year.style.fontSize = "12px";
     year.style.color = "#555";
     info.appendChild(year)
     const rating = document.createElement("div");
-    rating.textContent = `⭐ ${show.vote_average.toFixed(1)}`;
+    show.vote_average && (rating.textContent = `⭐ ${show.vote_average.toFixed(1)}`)
     rating.style.fontSize = "12px";
     rating.style.color = "#555";
     info.appendChild(rating)
@@ -129,12 +279,11 @@ function appendresult(show,i){
       let Epselect = document.createElement('select')
       let langselect = document.createElement('select')
       let All = document.createElement('option')
-      All.value = "all"
-      All.innerHTML = "all"
-      langselect.appendChild(All)
       let dict = new Set()
       let fetchsubdiv = document.createElement('div')
       let fetchSubButton = document.createElement('button')
+      All.value = "all"
+      All.innerHTML = "all"
       fetchSubButton.style.border = 'none'
       fetchSubButton.style.outline = 'none'
       fetchSubButton.style.padding = 'none'
@@ -240,7 +389,6 @@ function appendresult(show,i){
         manualsearch.type = "text"
         manualsearch.style.cssText = `outline: none;border: 1px solid black;padding: 5px 10px 5px 5px ;background-color: transparent;position: relative;width:40%;height:50%;`
         manualsearch.placeholder = "Search Manually";
-        console.log(show)
 
         Languagelabel.setAttribute("for",'Language')
         Sessionlabel.setAttribute("for",'Session')
@@ -248,8 +396,12 @@ function appendresult(show,i){
         ul.appendChild(results)
 
         async function fetchOnChange(){
-          await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
-          subDisplay(langselect.value)
+          if(isTv){
+            await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+            subDisplay(langselect.value)
+          }else{
+
+          }
         }
         Epselect.addEventListener("change",()=>{
           clearTimeout(epTimer)
@@ -257,7 +409,6 @@ function appendresult(show,i){
         });
         fetchSubButton.addEventListener('click',async ()=>{
           await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
-          console.log(subtitles)
           subDisplay(langselect.value)
         })
         langselect.addEventListener('change',async ()=>{
@@ -265,13 +416,14 @@ function appendresult(show,i){
             subDisplay(langselect.value)
           }
         })
-          manualsearch.addEventListener("input",(e)=>{
+        manualsearch.addEventListener("input",(e)=>{
           clearTimeout(secTimer)
           secTimer = setTimeout(async () => {
               await fetchSub(e.target.value,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
               subDisplay(langselect.value)
             }, 3000);
         })
+        langselect.appendChild(All)
         Sessionselect.addEventListener("change",addEps);
         selectContainer.appendChild(Sessionlabel)
         selectContainer.appendChild(Sessionselect)
@@ -330,113 +482,11 @@ function appendresult(show,i){
       ul.appendChild(li)
     }
 function appenData(data){
-    const catg = document.createElement("div");
-    const line = document.createElement("div");
-    const after = document.createElement("div");
-    line.style.cssText = "margin-top:-7px;width:100%;height:2px;background-color:grey;"
-    after.className = "after"
-    catg.appendChild(after)
-    catg.style.position = "relative";
-    let text = ["All","Tv shows","Movies"]
-    let classes = ["buttn","buttn1","buttn2"]
-    let wrappers = []
-    let buttons = []
-
-    catg.style.display = 'flex'
-    catg.style.padding = '10px 0px 0px 0px'
-    catg.style.width = "100%"
-    catg.style.gap = '9px'
-    text.forEach((text,i)=>{
-      let buttn = document.createElement("button")
-      buttn.style.cssText =` padding: 5px 10px;background-color:#5863F8;color:white;font-family: cursive;  border-top: 2px solid black;
-      border-bottom: 2px solid black;
-        border-right: none;
-      border-left: none;
-      border-radius: 8px`
-      buttn.innerText = text
-      buttn.className = classes[i]
-      const wrapper = document.createElement("span");
-      wrapper.style.cssText =`display: inline-flex;justify-content: center;align-items: center;padding: 5px 10px;opacity:0;width:max-content;pointer-events: none;z-index:50;top:50%;left:0;background-color:#2e2e3a;transform: translate(0, -50%);color:white;font-family: cursive;
-        border-top: 2px solid black;
-  border-bottom: 2px solid black;
-  border-right: none;
-  border-left: none;
-  border-radius: 8px;transition: all 1200ms ease-in-out;`
-      wrapper.innerText = text
-      wrapper.className = `.wrapper${i}`
-      wrapper.style.position = "absolute"
-      function playAnimation(el, className) {
-          el.classList.remove(
-            'phase',
-            'phase2',
-            'Phasereverse',
-            'Phase2reverse'
-          );
-
-          requestAnimationFrame(() => {
-            el.classList.add(className);
-          });
-      }
-      buttn.addEventListener("click",(b)=>{
-        wrapper.classList.remove('unfocus')
-        wrapper.classList.add('focus')
-        if(i ==0){
-            after.style.background = "linear-gradient(107deg,rgba(46, 46, 58, 0.91) 0%, rgba(88, 99, 248, 1) 62%)"
-          if(after.classList.contains('phase2')){
-            after.classList.remove("phase2");
-            playAnimation(after,'Phase2reverse')
-            setTimeout(()=>{
-              playAnimation(after,'Phasereverse')
-            },1200)
-          }
-          if(after.classList.contains('phase') || after.classList.contains('Phase2reverse')){
-            after.classList.remove("phase","Phase2reverse");
-            playAnimation(after,'Phasereverse')
-          }
-        }
-        if(i ==1){
-          if(after.classList.contains('phase2')){
-            after.style.background = "linear-gradient(107deg,rgba(46, 46, 58, 0.91) 0%, rgba(88, 99, 248, 1) 62%)"
-            after.classList.remove("phase2");
-            playAnimation(after,'Phase2reverse')
-          }
-          else if(!after.classList.contains('phase')){
-            after.style.background = "linear-gradient(107deg,rgba(88, 99, 248, 1) 0%, rgba(46, 46, 58, 0.91) 62%)"
-            playAnimation(after,'phase')
-          }
-        }
-        if(i ==2){
-          after.style.background = "linear-gradient(107deg,rgba(88, 99, 248, 1) 0%, rgba(46, 46, 58, 0.91) 62%)"
-
-          if(after.classList.contains('phase')){
-            after.classList.remove("phase","phase2");
-            playAnimation(after,'phase2')
-          }
-          else if(!after.classList.contains('phase')){
-            playAnimation(after,'phase')
-            setTimeout(()=>{
-              playAnimation(after,'phase2')
-            },1200)
-          }
-        }
-        
-        wrappers.forEach((v,g)=>{
-          if(v.classList.contains('focus') && i != g){
-            v.classList.remove('focus')
-            v.classList.add('unfocus')
-          }
-        })
-
-      })
-      buttn.appendChild(wrapper)
-      wrappers.push(wrapper)
-      buttons.push(buttn)
-      catg.appendChild(buttn)
-    })
-    wrappers[0].classList.add('focus')
-    ul.appendChild(catg)
-    ul.appendChild(line)
-  data.map((show,i)=>appendresult(show,i))
+  if(data?.length > 0){
+    data.map((show,i)=>appendresult(show,i))
+  }else{
+    // No Search results
+  }
 }
 
 function fetchTvshowMv() {
@@ -462,15 +512,40 @@ function fetchTvshowMv() {
           }
         }
       );
-
-      const data = await res.json();
-      ul.innerHTML = ''
-      if(data.results.length < 1){
+      const movies = await fetch(
+        `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      const tvData = await res.json();
+      tvData.results = tvData.results.map((e)=>{
+        return {...e, media_type:"tv"}
+      })
+      const moviesData = await movies.json();
+      moviesData.results = moviesData.results.map((e)=>{
+        return {...e, media_type:"movie"}
+      })
+      let Data = [...tvData.results,...moviesData.results]
+      tempmovies = moviesData
+      temptvshows = tvData
+      tempall = Data
+      ul.querySelectorAll('li').forEach((item)=>item.remove())
+      console.log(Data)
+      if(Data?.length < 1){
           comment.style.opacity = 1 
       }
-      appenData(data.results)
-    chrome.storage.local.set({searchtitle:query})
-    chrome.storage.local.set({searchdata:data.results})
+      if(tempcatg == "All"){
+        appenData(Data)
+      }else if(tempcatg == "Tv shows"){
+        appenData(tvData.results)
+      }else{
+        appenData(moviesData.results)
+      }
+      chrome.storage.local.set({searchtitle:query,searchdata:Data,movies:moviesData,tvshows:tvData})
 
   },700)
 }
