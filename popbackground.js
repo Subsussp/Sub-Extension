@@ -31,23 +31,38 @@ let query;
 let temptvshows ;
 let tempmovies ;
 let tempcatg ;
+let firstSearch = true;
 let season;
 let arrow = document.getElementById('arrow-back')
 let comment = document.getElementById('comment')
 let searchinput = document.getElementById('subsearch')
 const ul = document.getElementById('list');
+
+document.addEventListener("click",(e)=>{
+  if(e.target.classList.contains("download-btn")){
+    let fileid = e.target.dataset.id
+    // let fileid = e.target.dataset.id
+    // let fileid = e.target.dataset.id
+    console.log(fileid)
+  }
+})
+
  function Checkstorage(){
-  let searchtitle = chrome.storage.local.get(["searchtitle","searchdata","tvshows","movies","catg"]).then((result)=>{
+  chrome.storage.local.get(["state","searchtitle","searchdata","tvshows","movies","catg","card","cardSub"]).then((result)=>{
+    if(result.state){
+      state = result.state
+    }else{
+      state == "All"
+    }
+    if(state == "All"){
       searchinput.value = result.searchtitle
       query = result.searchtitle
       ul.innerHTML = ''
-
       tempcatg = result.catg
       temptvshows = result.tvshows 
       tempmovies = result.movies
-      console.log(result)
       if(!result.catg){
-        chrome.storage.local.set({catg:"All"})
+        chrome.storage.local.set({catg:"All",state:state})
         CreateNav(0)
         appenData(result.searchdata)
       }
@@ -68,8 +83,18 @@ const ul = document.getElementById('list');
       }
       document.getElementById('inplace').style.animation = "none"
       document.getElementById('inplace').style.opacity = 0
-  })
-
+    }
+    else{
+      if(result.card){
+        ul.innerHTML = ''
+        let isTv = result.card.media_type == "tv"
+        let [li,card] = CreateCard(result.card,isTv)
+        cardSelect(result.card,li,isTv,result.cardSub)
+        ul.parentElement.style.display = 'block'
+      }
+      // let card;
+    }
+    })
 }
 
 Checkstorage()
@@ -81,6 +106,7 @@ function CreateNav(focusIndex){
   let anim= ["phase","phase2"]
   line.style.cssText = "margin-top:-7px;width:100%;height:2px;background-color:grey;"
   after.className = "after"
+  catg.id = "MenuNav"
   catg.appendChild(after)
   catg.style.position = "relative";
   let text = ["All","Tv shows","Movies"]
@@ -205,18 +231,36 @@ searchinput.addEventListener(('input'), (e)=>{
   fetchTvshowMv()
 })
 arrow.addEventListener("click",()=>{
+  chrome.storage.local.set({state:"All"})
   Checkstorage()
 })
 async function fetchSub(name,imdb_id,tmdb_id,year,session,episode){
-  let fetchdata = await fetch(`http://localhost:3000/api?q=${name}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&episode=${episode}&session=${session}`) 
+  let fetchdata = await fetch(`http://localhost:3000/api/search?q=${name}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&episode=${episode}&session=${session}`) 
   subtitles = ''
   subtitles = await fetchdata.json()
+  chrome.storage.local.set({cardSub:subtitles})
 }
 function appendresult(show,i){
     state = "All"
+    chrome.storage.local.set({state:"All"})
     arrow.style.display = 'none';
     comment.style.opacity = 0
     let isTv = show?.media_type == "tv"
+    let [li,card] = CreateCard(show,isTv)    
+    ul.style.flexDirection = "row";
+    ul.parentElement.style.display = 'block'
+    card.addEventListener("click",(e)=>cardSelect(show,li,isTv))
+    ul.appendChild(li)
+    }
+function appenData(data){
+  if(data?.length > 0){
+    data.map((show,i)=>appendresult(show,i))
+  }else{
+    // No Search results
+  }
+}
+
+function CreateCard(show,isTv){
     const li = document.createElement("li");
     const card = document.createElement("button");
     card.style.display = "flex";
@@ -257,16 +301,88 @@ function appendresult(show,i){
     card.appendChild(info);
     li.style.margin = "0";
     li.style.padding = "0";
-    
     li.appendChild(card)
-    ul.style.flexDirection = "row";
-    ul.parentElement.style.display = 'block'
+    return [li,card]
+}
+function fetchTvshowMv() {
+    clearTimeout(timer)
+    if(query?.length < 1){
+      comment.style.opacity = 0
+      document.getElementById('inplace').style.animation = "Lftright 8s linear infinite"
+      document.getElementById('inplace').style.opacity = 1
+      return
+  }
+    document.getElementById('inplace').style.animation = "none"
+    document.getElementById('inplace').style.opacity = 0
+    comment.style.opacity = 0
 
+    if(query?.length < 2)return
+    timer = setTimeout(async()=> {
+      // Fetching the data
+      const res = await fetch(
+        `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      const movies = await fetch(
+        `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      const tvData = await res.json();
+      tvData.results = tvData.results.map((e)=>{
+        return {...e, media_type:"tv"}
+      })
+      const moviesData = await movies.json();
+      moviesData.results = moviesData.results.map((e)=>{
+        return {...e, media_type:"movie"}
+      })
+      let Data = [...tvData.results,...moviesData.results]
+      // removing the old search values
+      ul.querySelectorAll('li').forEach((item)=>item.remove())
 
-    card.addEventListener("click",async () => {
+      if(Data?.length < 1){
+          comment.style.opacity = 1 
+      }else{
+        if(!document.getElementById('MenuNav')){
+          CreateNav(0)
+        }
+        if(tempcatg){
+          if(tempcatg == "All"){
+            appenData(Data)
+          }else if(tempcatg == "Tv shows"){
+            appenData(tvData.results)
+          }else{
+            appenData(moviesData.results)
+          }
+        }else{
+          tempcatg = "All"
+          appenData(Data)
+        }
 
+      }
+      // Storing the data
+      tempmovies = moviesData
+      temptvshows = tvData
+      tempall = Data
+      chrome.storage.local.set({searchtitle:query,searchdata:Data,movies:moviesData,tvshows:tvData})
+
+  },700)
+}
+
+async function cardSelect(show,li,isTv,cardSub){
       state = "Single"
+      chrome.storage.local.set({state:"Single",card:show})
       arrow.style.display = 'block';
+      list.style.display = 'block';
       let results = document.createElement('div')
       let controlbar = document.createElement('div')
       // labels
@@ -348,7 +464,8 @@ function appendresult(show,i){
               </div>
 
               <div class="right">
-                <a href="${sub.attributes.url}" target="_blank" class="download-btn">⬇</a>
+                <a href="${sub.attributes.url}" target="_blank" class="redirect-btn">⬇</a>
+                <button id="download-btn" data-id=${sub.attributes.subtitle_id} target="_blank" class="download-btn">⬇</button>
               </div>
             </div>`
               results.appendChild(resultcard)
@@ -356,201 +473,134 @@ function appendresult(show,i){
 
           })   
         }
-        ul.innerHTML = ''
-        ul.appendChild(li)
-        ul.style.alignItems = 'center'
-        ul.style.flexDirection = "column";
-        controlbar.style.display = "flex";
-        controlbar.style.flexDirection = "row";
-        controlbar.style.justifyContent = "space-between";
-        controlbar.style.alignItems = "center";
-        controlbar.style.gap = "10px";
-        controlbar.style.padding = "10px";
-        selectContainer.style.display = "flex";
-        selectContainer.style.flexDirection = "row";
-        selectContainer.style.gap = "10px";
-        selectContainer.style.padding = "10px";
-        controlbar.style.width = "100%";
-        results.style.display = "flex";
-        results.style.flexDirection = "column";
-        results.style.gap = "10px";
-        results.style.width= "100%";
-        results.style.alignItems = "center";
-        results.style.fontFamily= "cursive"
+      ul.innerHTML = ''
+      ul.appendChild(li)
+      ul.style.display = 'flex'
+      ul.style.alignItems = 'center'
+      ul.style.flexDirection = "column";
+      controlbar.style.display = "flex";
+      controlbar.style.flexDirection = "row";
+      controlbar.style.justifyContent = "space-between";
+      controlbar.style.alignItems = "center";
+      controlbar.style.gap = "10px";
+      controlbar.style.padding = "10px";
+      selectContainer.style.display = "flex";
+      selectContainer.style.flexDirection = "row";
+      selectContainer.style.gap = "10px";
+      selectContainer.style.padding = "10px";
+      controlbar.style.width = "100%";
+      results.style.display = "flex";
+      results.style.flexDirection = "column";
+      results.style.gap = "10px";
+      results.style.width= "100%";
+      results.style.alignItems = "center";
+      results.style.fontFamily= "cursive"
 
-        langselect.id = 'Language'
-        Sessionselect.id = 'Session'
-        Epselect.id = 'Episode'
+      langselect.id = 'Language'
+      Sessionselect.id = 'Session'
+      Epselect.id = 'Episode'
 
-        Sessionlabel.innerHTML = 'Session:'
-        Eplabel.innerHTML = 'Episode:'
-        Languagelabel.innerHTML = 'Language:'
-        let manualsearch = document.createElement('input')
-        manualsearch.type = "text"
-        manualsearch.style.cssText = `outline: none;border: 1px solid black;padding: 5px 10px 5px 5px ;background-color: transparent;position: relative;width:40%;height:50%;`
-        manualsearch.placeholder = "Search Manually";
+      Sessionlabel.innerHTML = 'Session:'
+      Eplabel.innerHTML = 'Episode:'
+      Languagelabel.innerHTML = 'Language:'
+      let manualsearch = document.createElement('input')
+      manualsearch.type = "text"
+      manualsearch.style.cssText = `outline: none;border: 1px solid black;padding: 5px 10px 5px 5px ;background-color: transparent;position: relative;width:40%;height:50%;`
+      manualsearch.placeholder = "Search Manually";
 
-        Languagelabel.setAttribute("for",'Language')
-        Sessionlabel.setAttribute("for",'Session')
-        Eplabel.setAttribute("for",'Episode')
-        ul.appendChild(results)
+      Languagelabel.setAttribute("for",'Language')
+      Sessionlabel.setAttribute("for",'Session')
+      Eplabel.setAttribute("for",'Episode')
+      ul.appendChild(results)
 
-        async function fetchOnChange(){
-          if(isTv){
-            await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+      async function fetchOnChange(){
+        if(isTv){
+          if(cardSub){
+            console.log("yes sir")
+            console.log(cardSub)
+            subtitles = cardSub
             subDisplay(langselect.value)
           }else{
-
-          }
-        }
-        Epselect.addEventListener("change",()=>{
-          clearTimeout(epTimer)
-          epTimer = setTimeout(fetchOnChange, 1600);
-        });
-        fetchSubButton.addEventListener('click',async ()=>{
-          await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
-          subDisplay(langselect.value)
-        })
-        langselect.addEventListener('change',async ()=>{
-          if(subtitles?.length > 0){
+            await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
             subDisplay(langselect.value)
           }
-        })
-        manualsearch.addEventListener("input",(e)=>{
-          clearTimeout(secTimer)
-          secTimer = setTimeout(async () => {
-              await fetchSub(e.target.value,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
-              subDisplay(langselect.value)
-            }, 3000);
-        })
-        langselect.appendChild(All)
-        Sessionselect.addEventListener("change",addEps);
-        selectContainer.appendChild(Sessionlabel)
-        selectContainer.appendChild(Sessionselect)
-        selectContainer.appendChild(Eplabel)
-        selectContainer.appendChild(Epselect)
-        selectContainer.appendChild(Languagelabel)
-        selectContainer.appendChild(langselect)
-        controlbar.appendChild(selectContainer)
-        // controlbar.appendChild(manualsearch)
-        // fetchsubdiv.appendChild(fetchSubButton)
-        controlbar.appendChild(fetchsubdiv)
-        results.appendChild(controlbar)
-                let req = await fetch(`https://api.themoviedb.org/3/tv/${show.id}/external_ids`,{
-          headers:{
-          Authorization:`Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
-          "Content-Type": "application/json"
-        }})
+        }else{
 
-        let imdbjson = await req.json()
-
-   
-        const tvDetailsRes = await fetch(
-          `https://api.themoviedb.org/3/tv/${show.id}`,
-          { headers: {          
-            Authorization:`Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
-          }});
-        const tvDetails = await tvDetailsRes.json();
-        if(tvDetails.seasons){
-          tvDetails.seasons.map((session)=>{
-            let seNumber = session.season_number
-            if(seNumber == 0 || isNaN(seNumber))return
-            let option = document.createElement('option')
-            option.value = seNumber
-            option.innerText = seNumber
-            Sessionselect.appendChild(option)
-          })
         }
-        console.log(tvDetails)
-        function addEps() {
-          const value = Sessionselect.value;
-          let object = tvDetails.seasons.filter((session)=>session.season_number == value)[0]
-          Epselect.innerHTML = ''
-          for(let i =1;i <= object.episode_count;i++){
-            let option = document.createElement('option')
-            option.value = i
-            option.innerText = i
-            Epselect.appendChild(option)
-          }
-          fetchOnChange()
-        }
-        addEps()
-        // chrome.tabs.create({ url:
-        //     `https://www.subtitlecat.com/index.php?search=${show.name}`
-        // });
+      }
+      Epselect.addEventListener("change",()=>{
+        clearTimeout(epTimer)
+        epTimer = setTimeout(fetchOnChange, 1600);
       });
-      ul.appendChild(li)
-    }
-function appenData(data){
-  if(data?.length > 0){
-    data.map((show,i)=>appendresult(show,i))
-  }else{
-    // No Search results
-  }
-}
-
-function fetchTvshowMv() {
-    clearTimeout(timer)
-    if(query?.length < 1){
-      comment.style.opacity = 0
-      document.getElementById('inplace').style.animation = "Lftright 8s linear infinite"
-      document.getElementById('inplace').style.opacity = 1
-      return
-  }
-    document.getElementById('inplace').style.animation = "none"
-    document.getElementById('inplace').style.opacity = 0
-    comment.style.opacity = 0
-
-    if(query?.length < 2)return
-    timer = setTimeout(async()=> {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(query)}`,
-        {
-          headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      const movies = await fetch(
-        `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(query)}`,
-        {
-          headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      const tvData = await res.json();
-      tvData.results = tvData.results.map((e)=>{
-        return {...e, media_type:"tv"}
+      fetchSubButton.addEventListener('click',async ()=>{
+        await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+        subDisplay(langselect.value)
       })
-      const moviesData = await movies.json();
-      moviesData.results = moviesData.results.map((e)=>{
-        return {...e, media_type:"movie"}
+      langselect.addEventListener('change',async ()=>{
+        if(subtitles?.length > 0){
+          subDisplay(langselect.value)
+        }
       })
-      let Data = [...tvData.results,...moviesData.results]
-      tempmovies = moviesData
-      temptvshows = tvData
-      tempall = Data
-      ul.querySelectorAll('li').forEach((item)=>item.remove())
-      console.log(Data)
-      if(Data?.length < 1){
-          comment.style.opacity = 1 
-      }
-      if(tempcatg == "All"){
-        appenData(Data)
-      }else if(tempcatg == "Tv shows"){
-        appenData(tvData.results)
-      }else{
-        appenData(moviesData.results)
-      }
-      chrome.storage.local.set({searchtitle:query,searchdata:Data,movies:moviesData,tvshows:tvData})
+      manualsearch.addEventListener("input",(e)=>{
+        clearTimeout(secTimer)
+        secTimer = setTimeout(async () => {
+            await fetchSub(e.target.value,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+            subDisplay(langselect.value)
+          }, 3000);
+      })
+      langselect.appendChild(All)
+      Sessionselect.addEventListener("change",addEps);
+      selectContainer.appendChild(Sessionlabel)
+      selectContainer.appendChild(Sessionselect)
+      selectContainer.appendChild(Eplabel)
+      selectContainer.appendChild(Epselect)
+      selectContainer.appendChild(Languagelabel)
+      selectContainer.appendChild(langselect)
+      controlbar.appendChild(selectContainer)
+      // controlbar.appendChild(manualsearch)
+      // fetchsubdiv.appendChild(fetchSubButton)
+      controlbar.appendChild(fetchsubdiv)
+      results.appendChild(controlbar)
 
-  },700)
+      let req = await fetch(`https://api.themoviedb.org/3/tv/${show.id}/external_ids`,{
+        headers:{
+        Authorization:`Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
+        "Content-Type": "application/json"
+      }})
+
+      let imdbjson = await req.json()
+  
+      const tvDetailsRes = await fetch(
+        `https://api.themoviedb.org/3/tv/${show.id}`,
+        { headers: {          
+          Authorization:`Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
+        }});
+      const tvDetails = await tvDetailsRes.json();
+      if(tvDetails.seasons){
+        tvDetails.seasons.map((session)=>{
+          let seNumber = session.season_number
+          if(seNumber == 0 || isNaN(seNumber))return
+          let option = document.createElement('option')
+          option.value = seNumber
+          option.innerText = seNumber
+          Sessionselect.appendChild(option)
+        })
+      }
+      function addEps() {
+        const value = Sessionselect.value;
+        let object = tvDetails.seasons.filter((session)=>session.season_number == value)[0]
+        Epselect.innerHTML = ''
+        for(let i =1;i <= object.episode_count;i++){
+          let option = document.createElement('option')
+          option.value = i
+          option.innerText = i
+          Epselect.appendChild(option)
+        }
+        fetchOnChange()
+      }
+      addEps()
+      
 }
-
-
 reader.onload = (e) => {
     const text = e.target.result;
     let linesArr = text.split('\n')
