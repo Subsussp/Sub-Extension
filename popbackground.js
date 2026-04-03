@@ -30,6 +30,7 @@ let subtitles;
 let query;
 let temptvshows ;
 let tempmovies ;
+let tempcardSub;
 let tempcatg ;
 let firstSearch = true;
 let season;
@@ -89,6 +90,7 @@ document.addEventListener("click",(e)=>{
         ul.innerHTML = ''
         let isTv = result.card.media_type == "tv"
         let [li,card] = CreateCard(result.card,isTv)
+        tempcardSub = result.cardSub
         cardSelect(result.card,li,isTv,result.cardSub)
         ul.parentElement.style.display = 'block'
       }
@@ -234,11 +236,18 @@ arrow.addEventListener("click",()=>{
   chrome.storage.local.set({state:"All"})
   Checkstorage()
 })
-async function fetchSub(name,imdb_id,tmdb_id,year,session,episode){
-  let fetchdata = await fetch(`http://localhost:3000/api/search?q=${name}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&episode=${episode}&session=${session}`) 
+async function fetchTvSub(name,imdb_id,tmdb_id,year,session,episode){
+  let fetchdata = await fetch(`http://localhost:3000/api/search?q=${name}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&episode=${episode}&session=${session}&isTv=${true}`) 
   subtitles = ''
   subtitles = await fetchdata.json()
-  chrome.storage.local.set({cardSub:subtitles})
+  tempcardSub = {subtitlesCards:subtitles,id:imdb_id};
+  chrome.storage.local.set({cardSub:{subtitlesCards:subtitles,id:imdb_id}})
+}
+async function fetchMovieSub(name,imdb_id,tmdb_id,year){
+  let fetchdata = await fetch(`http://localhost:3000/api/search?q=${name}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&isTv=${false}`) 
+  subtitles = ''
+  subtitles = await fetchdata.json()
+  // chrome.storage.local.set({cardSub:subtitlesCards})
 }
 function appendresult(show,i){
     state = "All"
@@ -249,7 +258,7 @@ function appendresult(show,i){
     let [li,card] = CreateCard(show,isTv)    
     ul.style.flexDirection = "row";
     ul.parentElement.style.display = 'block'
-    card.addEventListener("click",(e)=>cardSelect(show,li,isTv))
+    card.addEventListener("click",(e)=>cardSelect(show,li,isTv,tempcardSub))
     ul.appendChild(li)
     }
 function appenData(data){
@@ -348,6 +357,7 @@ function fetchTvshowMv() {
       let Data = [...tvData.results,...moviesData.results]
       // removing the old search values
       ul.querySelectorAll('li').forEach((item)=>item.remove())
+      console.log(Data)
 
       if(Data?.length < 1){
           comment.style.opacity = 1 
@@ -379,226 +389,236 @@ function fetchTvshowMv() {
 }
 
 async function cardSelect(show,li,isTv,cardSub){
-      state = "Single"
-      chrome.storage.local.set({state:"Single",card:show})
-      arrow.style.display = 'block';
-      list.style.display = 'block';
-      let results = document.createElement('div')
-      let controlbar = document.createElement('div')
-      // labels
-      let Sessionlabel = document.createElement('label')
-      let Eplabel = document.createElement('label')
-      let Languagelabel = document.createElement('label')
-      // select
-      let selectContainer = document.createElement('div')
-      let Sessionselect = document.createElement('select')
-      let Epselect = document.createElement('select')
-      let langselect = document.createElement('select')
-      let All = document.createElement('option')
-      let dict = new Set()
-      let fetchsubdiv = document.createElement('div')
-      let fetchSubButton = document.createElement('button')
-      All.value = "all"
-      All.innerHTML = "all"
-      fetchSubButton.style.border = 'none'
-      fetchSubButton.style.outline = 'none'
-      fetchSubButton.style.padding = 'none'
-      fetchSubButton.style.backgroundColor = 'black'
-      fetchSubButton.style.color = 'white'
-      fetchsubdiv.style.alignItems = "center";
-      fetchsubdiv.style.display = "flex";
-      fetchSubButton.style.padding = '5px 10px'
-      fetchSubButton.innerText = "Fetch"
-      function subDisplay(langfilter){
-        document.querySelectorAll('.subCard').forEach((item)=>item.remove())
-        subtitles.forEach((sub)=>{
-            let resultcard = document.createElement('div')
-            resultcard.className = 'subCard'
-            resultcard.style.width= '100%'
-          if(!dict.has(sub.attributes.language) && sub.attributes.language){
-            dict.add(sub.attributes.language)
-            let option = document.createElement('option')
-            option.value = sub.attributes.language
-            option.innerText = sub.attributes.language
-            langselect.appendChild(option)
-          }
-          if(langfilter != "all" && langfilter){
-            if(langfilter == sub.attributes.language){
-              resultcard.innerHTML =   `<div class="subtitle-row">
-              <div class="left">
-                <span class="lang">${ sub.attributes?.language?.toUpperCase()}</span>
-              </div>
+  // Vars    
+  state = "Single";
+  let imdbjson;
+  let tvDetails ;
 
-              <div class="middle">
-                <h3 class="title">${ sub.attributes.release}</h3>
-                <p class="release">${ sub.attributes.release.match(/\((.*?)\)/)?.[1] || ""}</p>
+  chrome.storage.local.set({state:"Single",card:show})
+  arrow.style.display = 'block';
+  list.style.display = 'block';
+  let results = document.createElement('div')
+  let controlbar = document.createElement('div')
 
-                <div class="meta">
-                  <span> ${ sub.attributes.download_count} Downloads</span>
+  // labels
+  let Sessionlabel = document.createElement('label')
+  let Eplabel = document.createElement('label')
+  let Languagelabel = document.createElement('label')
 
-                  ${ sub.attributes.foreign_parts_only ? `<span class="tag">Foreign</span>` : ""}
-                </div>
-              </div>
+  // select
+  let selectContainer = document.createElement('div')
+  let Sessionselect = document.createElement('select')
+  let Epselect = document.createElement('select')
+  let langselect = document.createElement('select')
+  let All = document.createElement('option')
+  let dict = new Set()
+  let fetchsubdiv = document.createElement('div')
+  let fetchSubButton = document.createElement('button')
 
-              <div class="right">
-                <a href="${sub.attributes.url}" target="_blank" class="download-btn">⬇</a>
-              </div>
-            </div>`
-              results.appendChild(resultcard)
-          }
-          }else{
-              resultcard.innerHTML =   `<div class="subtitle-row">
-              <div class="left">
-                <span class="lang">${ sub.attributes?.language?.toUpperCase()}</span>
-              </div>
-
-              <div class="middle">
-                <h3 class="title">${ sub.attributes.release}</h3>
-                <p class="release">${ sub.attributes.release.match(/\((.*?)\)/)?.[1] || ""}</p>
-
-                <div class="meta">
-                  <span> ${ sub.attributes.download_count} Downloads</span>
-
-                  ${ sub.attributes.foreign_parts_only ? `<span class="tag">Foreign</span>` : ""}
-                </div>
-              </div>
-
-              <div class="right">
-                <a href="${sub.attributes.url}" target="_blank" class="redirect-btn">⬇</a>
-                <button id="download-btn" data-id=${sub.attributes.subtitle_id} target="_blank" class="download-btn">⬇</button>
-              </div>
-            </div>`
-              results.appendChild(resultcard)
-          }
-
-          })   
-        }
-      ul.innerHTML = ''
-      ul.appendChild(li)
-      ul.style.display = 'flex'
-      ul.style.alignItems = 'center'
-      ul.style.flexDirection = "column";
-      controlbar.style.display = "flex";
-      controlbar.style.flexDirection = "row";
-      controlbar.style.justifyContent = "space-between";
-      controlbar.style.alignItems = "center";
-      controlbar.style.gap = "10px";
-      controlbar.style.padding = "10px";
-      selectContainer.style.display = "flex";
-      selectContainer.style.flexDirection = "row";
-      selectContainer.style.gap = "10px";
-      selectContainer.style.padding = "10px";
-      controlbar.style.width = "100%";
-      results.style.display = "flex";
-      results.style.flexDirection = "column";
-      results.style.gap = "10px";
-      results.style.width= "100%";
-      results.style.alignItems = "center";
-      results.style.fontFamily= "cursive"
-
-      langselect.id = 'Language'
-      Sessionselect.id = 'Session'
-      Epselect.id = 'Episode'
-
-      Sessionlabel.innerHTML = 'Session:'
-      Eplabel.innerHTML = 'Episode:'
-      Languagelabel.innerHTML = 'Language:'
-      let manualsearch = document.createElement('input')
-      manualsearch.type = "text"
-      manualsearch.style.cssText = `outline: none;border: 1px solid black;padding: 5px 10px 5px 5px ;background-color: transparent;position: relative;width:40%;height:50%;`
-      manualsearch.placeholder = "Search Manually";
-
-      Languagelabel.setAttribute("for",'Language')
-      Sessionlabel.setAttribute("for",'Session')
-      Eplabel.setAttribute("for",'Episode')
-      ul.appendChild(results)
-
-      async function fetchOnChange(){
-        if(isTv){
-          if(cardSub){
-            console.log("yes sir")
-            console.log(cardSub)
-            subtitles = cardSub
-            subDisplay(langselect.value)
-          }else{
-            await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
-            subDisplay(langselect.value)
-          }
-        }else{
-
-        }
+  All.value = "all"
+  All.innerHTML = "all"
+  fetchSubButton.style.border = 'none'
+  fetchSubButton.style.outline = 'none'
+  fetchSubButton.style.padding = 'none'
+  fetchSubButton.style.backgroundColor = 'black'
+  fetchSubButton.style.color = 'white'
+  fetchsubdiv.style.alignItems = "center";
+  fetchsubdiv.style.display = "flex";
+  fetchSubButton.style.padding = '5px 10px'
+  fetchSubButton.innerText = "Fetch"
+  function subDisplay(langfilter){
+    document.querySelectorAll('.subCard').forEach((item)=>item.remove())
+    subtitles.forEach((sub)=>{
+        let resultcard = document.createElement('div')
+        resultcard.className = 'subCard'
+        resultcard.style.width= '100%'
+      if(!dict.has(sub.attributes.language) && sub.attributes.language){
+        dict.add(sub.attributes.language)
+        let option = document.createElement('option')
+        option.value = sub.attributes.language
+        option.innerText = sub.attributes.language
+        langselect.appendChild(option)
       }
-      Epselect.addEventListener("change",()=>{
-        clearTimeout(epTimer)
-        epTimer = setTimeout(fetchOnChange, 1600);
-      });
-      fetchSubButton.addEventListener('click',async ()=>{
-        await fetchSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+      if(langfilter != "all" && langfilter){
+        if(langfilter == sub.attributes.language){
+          resultcard.innerHTML =   `<div class="subtitle-row">
+          <div class="left">
+            <span class="lang">${ sub.attributes?.language?.toUpperCase()}</span>
+          </div>
+
+          <div class="middle">
+            <h3 class="title">${ sub.attributes.release}</h3>
+            <p class="release">${ sub.attributes.release.match(/\((.*?)\)/)?.[1] || ""}</p>
+
+            <div class="meta">
+              <span> ${ sub.attributes.download_count} Downloads</span>
+
+              ${ sub.attributes.foreign_parts_only ? `<span class="tag">Foreign</span>` : ""}
+            </div>
+          </div>
+
+          <div class="right">
+            <a href="${sub.attributes.url}" target="_blank" class="download-btn">⬇</a>
+          </div>
+        </div>`
+          results.appendChild(resultcard)
+      }
+      }else{
+          resultcard.innerHTML =   `<div class="subtitle-row">
+          <div class="left">
+            <span class="lang">${ sub.attributes?.language?.toUpperCase()}</span>
+          </div>
+
+          <div class="middle">
+            <h3 class="title">${ sub.attributes.release}</h3>
+            <p class="release">${ sub.attributes.release.match(/\((.*?)\)/)?.[1] || ""}</p>
+
+            <div class="meta">
+              <span> ${ sub.attributes.download_count} Downloads</span>
+
+              ${ sub.attributes.foreign_parts_only ? `<span class="tag">Foreign</span>` : ""}
+            </div>
+          </div>
+
+          <div class="right">
+            <a href="${sub.attributes.url}" target="_blank" class="redirect-btn">⬇</a>
+            <button id="download-btn" data-id=${sub.attributes.subtitle_id} target="_blank" class="download-btn">⬇</button>
+          </div>
+        </div>`
+        results.appendChild(resultcard)
+      }
+      
+
+      })   
+    }
+  ul.innerHTML = ''
+  ul.appendChild(li)
+  ul.style.display = 'flex'
+  ul.style.alignItems = 'center'
+  ul.style.flexDirection = "column";
+  controlbar.style.display = "flex";
+  controlbar.style.flexDirection = "row";
+  controlbar.style.justifyContent = "space-between";
+  controlbar.style.alignItems = "center";
+  controlbar.style.gap = "10px";
+  controlbar.style.padding = "10px";
+  selectContainer.style.display = "flex";
+  selectContainer.style.flexDirection = "row";
+  selectContainer.style.gap = "10px";
+  selectContainer.style.padding = "10px";
+  controlbar.style.width = "100%";
+  results.style.display = "flex";
+  results.style.flexDirection = "column";
+  results.style.gap = "10px";
+  results.style.width= "100%";
+  results.style.alignItems = "center";
+  results.style.fontFamily= "cursive"
+
+  langselect.id = 'Language'
+  Sessionselect.id = 'Session'
+  Epselect.id = 'Episode'
+
+  Sessionlabel.innerHTML = 'Session:'
+  Eplabel.innerHTML = 'Episode:'
+  Languagelabel.innerHTML = 'Language:'
+  let manualsearch = document.createElement('input')
+  manualsearch.type = "text"
+  manualsearch.style.cssText = `outline: none;border: 1px solid black;padding: 5px 10px 5px 5px ;background-color: transparent;position: relative;width:40%;height:50%;`
+  manualsearch.placeholder = "Search Manually";
+
+  Languagelabel.setAttribute("for",'Language')
+  Sessionlabel.setAttribute("for",'Session')
+  Eplabel.setAttribute("for",'Episode')
+  ul.appendChild(results)
+
+  async function fetchOnChange(){
+    if(isTv){
+      if(cardSub && cardSub.id == imdbjson.imdb_id){
+        subtitles = cardSub.subtitlesCards
         subDisplay(langselect.value)
-      })
-      langselect.addEventListener('change',async ()=>{
-        if(subtitles?.length > 0){
-          subDisplay(langselect.value)
-        }
-      })
-      manualsearch.addEventListener("input",(e)=>{
-        clearTimeout(secTimer)
-        secTimer = setTimeout(async () => {
-            await fetchSub(e.target.value,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
-            subDisplay(langselect.value)
-          }, 3000);
-      })
-      langselect.appendChild(All)
-      Sessionselect.addEventListener("change",addEps);
-      selectContainer.appendChild(Sessionlabel)
-      selectContainer.appendChild(Sessionselect)
-      selectContainer.appendChild(Eplabel)
-      selectContainer.appendChild(Epselect)
-      selectContainer.appendChild(Languagelabel)
-      selectContainer.appendChild(langselect)
-      controlbar.appendChild(selectContainer)
-      // controlbar.appendChild(manualsearch)
-      // fetchsubdiv.appendChild(fetchSubButton)
-      controlbar.appendChild(fetchsubdiv)
-      results.appendChild(controlbar)
+      }else{
+        await fetchTvSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+        subDisplay(langselect.value)
+      }
+    }else{
+      // Movie subtitles fetch
+        await fetchMovieSub(MovieDetails.original_title,imdbjson.imdb_id,show.id,show.release_date.split("-")[0])
+        subDisplay(langselect.value)
+    }
+  }
+  Epselect.addEventListener("change",()=>{
+    clearTimeout(epTimer)
+    epTimer = setTimeout(fetchOnChange, 1600);
+  });
+  // fetchSubButton.addEventListener('click',async ()=>{
+  //   await fetchTvSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+  //   subDisplay(langselect.value)
+  // })
+  langselect.addEventListener('change',async ()=>{
+    if(subtitles?.length > 0){
+      subDisplay(langselect.value)
+    }
+  })
+  manualsearch.addEventListener("input",(e)=>{
+    clearTimeout(secTimer)
+    secTimer = setTimeout(async () => {
+        await fetchTvSub(e.target.value,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+        subDisplay(langselect.value)
+      }, 3000);
+  })
+  langselect.appendChild(All)
+  Sessionselect.addEventListener("change",addEps);
+  selectContainer.appendChild(Sessionlabel)
+  selectContainer.appendChild(Sessionselect)
+  selectContainer.appendChild(Eplabel)
+  selectContainer.appendChild(Epselect)
+  selectContainer.appendChild(Languagelabel)
+  selectContainer.appendChild(langselect)
+  controlbar.appendChild(selectContainer)
+  // controlbar.appendChild(manualsearch)
+  // fetchsubdiv.appendChild(fetchSubButton)
+  controlbar.appendChild(fetchsubdiv)
+  results.appendChild(controlbar)
 
-      let req = await fetch(`https://api.themoviedb.org/3/tv/${show.id}/external_ids`,{
-        headers:{
+    let req = await fetch(`https://api.themoviedb.org/3/tv/${show.id}/external_ids`,{
+      headers:{
+      Authorization:`Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
+      "Content-Type": "application/json"
+    }})
+
+    imdbjson = await req.json()
+
+    const tvDetailsRes = await fetch(
+      `https://api.themoviedb.org/3/tv/${show.id}`,
+      { headers: {          
         Authorization:`Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
-        "Content-Type": "application/json"
-      }})
-
-      let imdbjson = await req.json()
+      }});
+    tvDetails = await tvDetailsRes.json();
+    if(tvDetails.seasons){
+      tvDetails.seasons.map((session)=>{
+        let seNumber = session.season_number
+        if(seNumber == 0 || isNaN(seNumber))return
+        let option = document.createElement('option')
+        option.value = seNumber
+        option.innerText = seNumber
+        Sessionselect.appendChild(option)
+      })
+    }
+    function addEps() {
+      const value = Sessionselect.value;
+      let object = tvDetails.seasons.filter((session)=>session.season_number == value)[0]
+      Epselect.innerHTML = ''
+      for(let i =1;i <= object.episode_count;i++){
+        let option = document.createElement('option')
+        option.value = i
+        option.innerText = i
+        Epselect.appendChild(option)
+      }
+      fetchOnChange()
+    }
+    addEps()
   
-      const tvDetailsRes = await fetch(
-        `https://api.themoviedb.org/3/tv/${show.id}`,
-        { headers: {          
-          Authorization:`Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
-        }});
-      const tvDetails = await tvDetailsRes.json();
-      if(tvDetails.seasons){
-        tvDetails.seasons.map((session)=>{
-          let seNumber = session.season_number
-          if(seNumber == 0 || isNaN(seNumber))return
-          let option = document.createElement('option')
-          option.value = seNumber
-          option.innerText = seNumber
-          Sessionselect.appendChild(option)
-        })
-      }
-      function addEps() {
-        const value = Sessionselect.value;
-        let object = tvDetails.seasons.filter((session)=>session.season_number == value)[0]
-        Epselect.innerHTML = ''
-        for(let i =1;i <= object.episode_count;i++){
-          let option = document.createElement('option')
-          option.value = i
-          option.innerText = i
-          Epselect.appendChild(option)
-        }
-        fetchOnChange()
-      }
-      addEps()
+
       
 }
 reader.onload = (e) => {

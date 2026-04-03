@@ -1,5 +1,5 @@
-Getting both tv shows and movies from tmdb
-fixing the results 
 fixing chat gpt design
 hosting the backend 
-Change the animation and use an elemen instead of the ::after
+movies subtitles fetching backend , popup
+fixing this problem with the cacheing of the subtitles results and when the user clicks on the card
+checking why Dexter procter isn't showing anything it's passing the first two checks
