@@ -3,3 +3,4 @@ hosting the backend
 movies subtitles fetching backend , popup
 fixing this problem with the cacheing of the subtitles results and when the user clicks on the card
 checking why Dexter procter isn't showing anything it's passing the first two checks
+fixing this stuff with the search
