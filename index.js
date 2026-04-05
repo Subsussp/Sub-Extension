@@ -18,16 +18,14 @@ os.login({
 
 app.get('/api/search', (req, res) => {
     let isTv = req.query.isTv
-    console.log(isTv)
-    if(isTv){
-        let year = req.query.year;
-        let name = req.query.q
+    let name = req.query.q
+    let imdb_id = req.query.imdb_id
+    let tmdb_id = req.query.tmdb_id
+    let year = req.query.year;
+    if(isTv == "true"){
         let episode = req.query.episode
         let session = req.query.session
         let lang = req.query.lang
-        let tmdb_id = req.query.tmdb_id
-        let imdb_id = req.query.imdb_id
-
         os.subtitles({parent_imdb_id:imdb_id,episode_number:+episode,season_number:+session}).then((response)=>{
             console.log("first")
             if(response.data.length < 1){
@@ -46,8 +44,39 @@ app.get('/api/search', (req, res) => {
                 res.json(response.data)
             }
         }).catch(console.error)
-    }else{
+    }
+    else{
         // Movie fetch 
+        if(imdb_id == 'null'){
+            os.subtitles({tmdb_id:tmdb_id,type:"movie"}).then((response2)=>{
+                console.log(response2)
+                if(response2.data.length < 1){
+                    os.subtitles({query:name,type:"movie"}).then((response3)=>{
+                        res.json(response3.data)
+                    })
+                }else{
+                    res.json(response2.data)
+                }
+
+        })
+        }else{
+            os.subtitles({imdb_id:imdb_id,type:"movie"}).then((response)=>{
+                if(response.data.length < 1){
+                    os.subtitles({tmdb_id:tmdb_id,type:"movie"}).then((response2)=>{
+                        if(response2.data.length < 1){
+                            os.subtitles({query:name,type:"movie"}).then((response3)=>{
+                                res.json(response3.data)
+                            })
+                        }else{
+                            res.json(response2.data)
+                        }
+
+                    })
+                }else{
+                    res.json(response.data)
+                }
+            }).catch(console.error)
+        }
     }
 
 })
