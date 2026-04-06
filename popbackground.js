@@ -22,12 +22,14 @@ function Timestamp(time){
 }
 
 let state;
+let fetchTimer;
 let timer;
 let secTimer;
 let epTimer;
 let sessionTimer;
 let subtitles;
 let query;
+let backend = 'https://extention-442a3505471f.herokuapp.com';
 let temptvshows ;
 let tempmovies ;
 let CachedSession;
@@ -42,13 +44,12 @@ let searchinput = document.getElementById('subsearch')
 const ul = document.getElementById('list');
 
 document.addEventListener("click",(e)=>{
-  if(e.target.classList.contains("download-btn")){
+  if(e.target.classList.contains("download-btn") && fetchOn){
     let fileid = e.target.dataset.id
     let release = e.target.dataset.release
-    // let fileid = e.target.dataset.id
-    // let fileid = e.target.dataset.id
-    console.log(fileid)
+    let fetchOn = true
     chrome.runtime.sendMessage({action:'FetchAndinject',data:{fileid,release}},(respnose)=>{
+        fetchOn = false
         console.log(respnose)
     })
   }
@@ -56,15 +57,21 @@ document.addEventListener("click",(e)=>{
 
  function Checkstorage(){
   chrome.storage.local.get(["state","searchtitle","searchdata","tvshows","movies","catg","card","cardSub","CachedSession","CachedEp"]).then((result)=>{
-    
     if(result.state){
       state = result.state
     }else{
       state == "All"
     }
     if(state == "All"){
-      searchinput.value = result.searchtitle
-      query = result.searchtitle
+      searchinput.value = result.searchtitle || null
+      if(result.searchtitle){
+        document.getElementById('inplace').style.animation = "none"
+        document.getElementById('inplace').style.opacity = 0
+      }
+      console.log( Array.isArray(result?.searchdata) &&result.searchdata.length > 0)
+      console.log( Array.isArray(result?.tvshows.results) &&result.tvshows.results?.length > 0)
+      console.log( result.catg == "All")
+      query = result.searchtitle || null
       ul.innerHTML = ''
       tempcatg = result.catg
       temptvshows = result.tvshows 
@@ -74,23 +81,22 @@ document.addEventListener("click",(e)=>{
         CreateNav(0)
         appenData(result.searchdata)
       }
-      else if(result.catg == "All" && result.searchdata.length > 0){
+      else if(result.catg == "All" && Array.isArray(result?.searchdata) &&result.searchdata.length > 0){
         CreateNav(0)
         comment.style.opacity = 0  
         appenData(result.searchdata)
       }
-      else if(result.catg == "Tv shows" && result.tvshows.results?.length > 0){
+      else if(result.catg == "Tv shows" &&Array.isArray(result?.tvshows.results) &&result.tvshows.results?.length > 0){
         CreateNav(1)
         comment.style.opacity = 0
         appenData(result.tvshows.results)
       }
-      else if(result.catg == "Movies" && result.movies.results?.length > 0){
+      else if(result.catg == "Movies" && Array.isArray(result?.movies?.results) &&result.movies.results?.length > 0){
         CreateNav(2)
         comment.style.opacity = 0
         appenData(result.movies.results)
       }
-      document.getElementById('inplace').style.animation = "none"
-      document.getElementById('inplace').style.opacity = 0
+
     }
     else{
       if(result.card){
@@ -100,7 +106,6 @@ document.addEventListener("click",(e)=>{
         tempcardSub = result.cardSub
         CachedSession = +result.CachedSession
         CachedEp = +result.CachedEp
-        console.log(CachedEp,CachedSession)
         cardSelect(result.card,li,isTv,result.cardSub)
         ul.parentElement.style.display = 'block'
       }
@@ -249,14 +254,14 @@ arrow.addEventListener("click",()=>{
   Checkstorage()
 })
 async function fetchTvSub(name,imdb_id,tmdb_id,year,session,episode){
-  let fetchdata = await fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(name)}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&episode=${episode}&session=${session}&isTv=${true}`) 
+  let fetchdata = await fetch(`${backend}/api/search?q=${encodeURIComponent(name)}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&episode=${episode}&session=${session}&isTv=${true}`) 
   subtitles = ''
   subtitles = await fetchdata.json()
   tempcardSub = {subtitlesCards:subtitles,id:imdb_id};
   chrome.storage.local.set({cardSub:{subtitlesCards:subtitles,id:imdb_id}})
 }
 async function fetchMovieSub(name,imdb_id,tmdb_id,year){
-  let fetchdata = await fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(name)}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&isTv=${false}`) 
+  let fetchdata = await fetch(`${backend}/api/search?q=${encodeURIComponent(name)}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&isTv=${false}`) 
   subtitles = ''
   subtitles = await fetchdata.json()
   console.log(subtitles)
@@ -596,8 +601,21 @@ async function cardSelect(show,li,isTv,cardSub){
           </div>
 
           <div class="right">
-            <a href="${sub.attributes.url}" target="_blank" class="redirect-btn">⬇</a>
-            <button id="download-btn" data-id=${sub.attributes.files[0].file_id} target="_blank" class="download-btn">⬇</button>
+            <a href="${sub.attributes.url}" title="Go to subtitles file page" target="_blank" class="redirect-btn">
+            <svg style="display:flex;" width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#clip0_15_200)">
+              <rect width="24" height="24" fill="none"/>
+              <circle cx="12" cy="13" r="2" stroke="#000000" stroke-linejoin="round"/>
+              <path d="M12 7.5C7.69517 7.5 4.47617 11.0833 3.39473 12.4653C3.14595 12.7832 3.14595 13.2168 3.39473 13.5347C4.47617 14.9167 7.69517 18.5 12 18.5C16.3048 18.5 19.5238 14.9167 20.6053 13.5347C20.8541 13.2168 20.8541 12.7832 20.6053 12.4653C19.5238 11.0833 16.3048 7.5 12 7.5Z" stroke="#000000" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <defs>
+              <clipPath id="clip0_15_200">
+              <rect width="24" height="24" fill="none"/>
+              </clipPath>
+              </defs>
+              </svg>
+            </a>
+            <button title="Fetch and inject subtitles" id="download-btn" data-id=${sub.attributes.files[0].file_id} target="_blank" class="download-btn">Inject Subtitles</button>
           </div>
         </div>`
         results.appendChild(resultcard)

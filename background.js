@@ -18,7 +18,8 @@ function Timestamp(time){
   );
 }
 let delay = 0;
-let backEnd = `http://localhost:3000`
+let backEnd = `https://extention-442a3505471f.herokuapp.com`
+// let backEnd = `http://localhost:3000`
 chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
   if(msg?.action == "backgroundcall"){
     sendResponse({from:'background.js'})
@@ -40,9 +41,8 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
   }
   if(msg?.action == "FetchAndinject"){
     fetch(`${backEnd}/api/download?fileId=${msg?.data?.fileid}`).then(async (file)=>{
-      console.log(file.body)
       let url = await file.json()
-      console.log(url)
+      sendResponse({})
       try {
         let textReq = await fetch(url.link)
         let subText = await textReq.text()
@@ -85,7 +85,29 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
         console.log(error)
       }
     })
-    sendResponse({})
+
+    return true
+  }
+  if(msg?.type == "SUB_FETCH"){
+    fetch(`${backEnd}/api/search?q=${encodeURIComponent(msg.name)}&imdb_id=${msg.imdb_id}&year=${msg.year}&tmdb_id=${msg.tmdb_id}&episode=${msg.episode}&session=${msg.session}&isTv=${true}`).then(async (fetchdata)=>{      
+      let subtitles = await fetchdata.json()
+      sendResponse({sub:subtitles})
+      console.log(subtitles)
+    })
+    return true
+  }
+  if(msg?.type == "CACHED_VALUES"){
+  chrome.storage.local.get(["state","searchtitle","searchdata","tvshows","movies","catg","card","cardSub","CachedSession","CachedEp"]).then((result)=>{
+    sendResponse(result)
+  })
+    return true
+  }
+  if(msg?.type == "CACHE_VALUES"){
+    chrome.storage.local.set({state:msg.state,
+      searchdata:msg.tempall,
+      searchtitle:msg.query,movies:msg.tempmovies,tvshows:msg.temptvshows,cardSub:msg.cardSub,card:msg.card,catg:msg.tempcatg,CachedSession:msg.CachedSession,CachedEp:msg.CachedEp}).then((result)=>{
+        sendResponse({})
+    })
     return true
   }
   if(msg?.action == 'Deattach'){
