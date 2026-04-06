@@ -27,10 +27,8 @@ app.get('/api/search', (req, res) => {
         let session = req.query.session
         let lang = req.query.lang
         os.subtitles({parent_imdb_id:imdb_id,episode_number:+episode,season_number:+session}).then((response)=>{
-            console.log("first")
             if(response.data.length < 1){
                 os.subtitles({parent_tmdb_id:tmdb_id,season_number:+session,episode_number:+episode}).then((response2)=>{
-                        console.log("second")
                         if(response2.data.length < 1){
                             os.subtitles({query:name,season_number:+session,episode_number:+episode}).then((response3)=>{
                                 res.json(response3.data)
@@ -49,7 +47,6 @@ app.get('/api/search', (req, res) => {
         // Movie fetch 
         if(imdb_id == 'null'){
             os.subtitles({tmdb_id:tmdb_id,type:"movie"}).then((response2)=>{
-                console.log(response2)
                 if(response2.data.length < 1){
                     os.subtitles({query:name,type:"movie"}).then((response3)=>{
                         res.json(response3.data)
