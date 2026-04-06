@@ -82,8 +82,12 @@ app.get('/api/search', (req, res) => {
 })
 
 app.get('/api/download', (req, res) => {
-
-
+    let fileId = req.query.fileId
+    os.download({file_id:fileId}).then((response)=>{
+        res.send(response)
+    }).catch((error)=>{
+        console.log(error)
+    })
 })
 
 app.listen(port, () => {
