@@ -30,6 +30,8 @@ let subtitles;
 let query;
 let temptvshows ;
 let tempmovies ;
+let CachedSession;
+let CachedEp;
 let tempcardSub;
 let tempcatg ;
 let firstSearch = true;
@@ -42,14 +44,19 @@ const ul = document.getElementById('list');
 document.addEventListener("click",(e)=>{
   if(e.target.classList.contains("download-btn")){
     let fileid = e.target.dataset.id
+    let release = e.target.dataset.release
     // let fileid = e.target.dataset.id
     // let fileid = e.target.dataset.id
     console.log(fileid)
+    chrome.runtime.sendMessage({action:'FetchAndinject',data:{fileid,release}},(respnose)=>{
+        console.log(respnose)
+    })
   }
 })
 
  function Checkstorage(){
-  chrome.storage.local.get(["state","searchtitle","searchdata","tvshows","movies","catg","card","cardSub"]).then((result)=>{
+  chrome.storage.local.get(["state","searchtitle","searchdata","tvshows","movies","catg","card","cardSub","CachedSession","CachedEp"]).then((result)=>{
+    
     if(result.state){
       state = result.state
     }else{
@@ -91,6 +98,9 @@ document.addEventListener("click",(e)=>{
         let isTv = result.card.media_type == "tv"
         let [li,card] = CreateCard(result.card,isTv)
         tempcardSub = result.cardSub
+        CachedSession = +result.CachedSession
+        CachedEp = +result.CachedEp
+        console.log(CachedEp,CachedSession)
         cardSelect(result.card,li,isTv,result.cardSub)
         ul.parentElement.style.display = 'block'
       }
@@ -233,7 +243,9 @@ searchinput.addEventListener(('input'), (e)=>{
   fetchTvshowMv()
 })
 arrow.addEventListener("click",()=>{
-  chrome.storage.local.set({state:"All"})
+  chrome.storage.local.set({state:"All",CachedSession:null,CachedEp:null})
+  CachedEp = null
+  CachedSession = null
   Checkstorage()
 })
 async function fetchTvSub(name,imdb_id,tmdb_id,year,session,episode){
@@ -409,11 +421,25 @@ async function cardSelect(show,li,isTv,cardSub){
   let Eplabel;
   let Sessionselect ;
   let Epselect;
+  let Languagelabel = document.createElement('label')
+
+  // select
+  let langselect = document.createElement('select')
+  let All = document.createElement('option')
+  let dict = new Set()
+  let fetchsubdiv = document.createElement('div')
+  let fetchSubButton = document.createElement('button')
+
   ul.innerHTML = ''
-  ul.appendChild(li)
   ul.style.display = 'flex'
   ul.style.alignItems = 'center'
   ul.style.flexDirection = "column";
+  ul.appendChild(li)
+  langselect.appendChild(All)
+  selectContainer.appendChild(Languagelabel)
+  selectContainer.appendChild(langselect)
+
+
   if(isTv){
     Sessionlabel  = document.createElement('label')
     Eplabel = document.createElement('label')
@@ -426,15 +452,42 @@ async function cardSelect(show,li,isTv,cardSub){
     Eplabel.innerHTML = 'Episode:'
     Sessionlabel.setAttribute("for",'Session')
     Eplabel.setAttribute("for",'Episode')
+
+
+    function addEps(change) {
+        const value = Sessionselect.value;
+        let object = tvDetails.seasons.filter((session)=>session.season_number == value)[0]
+        Epselect.innerHTML = ''
+        for(let i =1;i <= object.episode_count;i++){
+          let option = document.createElement('option')
+          option.value = i
+          option.innerText = i
+          Epselect.appendChild(option)
+        }
+        fetchOnChange(change)
+    }
+
+
+
     Epselect.addEventListener("change",()=>{
       clearTimeout(epTimer)
-      epTimer = setTimeout(fetchOnChange, 1600);
+      epTimer = setTimeout(()=>{
+        chrome.storage.local.set({CachedEp:Epselect.value})
+        fetchOnChange(true)
+      }
+  , 1600);
     });  
-    Sessionselect.addEventListener("change",addEps);
+    Sessionselect.addEventListener("change",()=>{
+      chrome.storage.local.set({CachedSession:Sessionselect.value,CachedEp:1})
+
+      addEps(true)
+    });
     selectContainer.appendChild(Sessionlabel)
     selectContainer.appendChild(Sessionselect)
     selectContainer.appendChild(Eplabel)
     selectContainer.appendChild(Epselect)
+    controlbar.appendChild(selectContainer)
+    results.appendChild(controlbar)
 
     let req = await fetch(`https://api.themoviedb.org/3/tv/${show.id}/external_ids`,{
       headers:{
@@ -451,7 +504,7 @@ async function cardSelect(show,li,isTv,cardSub){
       }});
     tvDetails = await tvDetailsRes.json();
     if(tvDetails.seasons){
-      tvDetails.seasons.map((session)=>{
+      tvDetails.seasons.forEach((session)=>{
         let seNumber = session.season_number
         if(seNumber == 0 || isNaN(seNumber))return
         let option = document.createElement('option')
@@ -459,20 +512,11 @@ async function cardSelect(show,li,isTv,cardSub){
         option.innerText = seNumber
         Sessionselect.appendChild(option)
       })
-    }
-    function addEps() {
-      const value = Sessionselect.value;
-      let object = tvDetails.seasons.filter((session)=>session.season_number == value)[0]
-      Epselect.innerHTML = ''
-      for(let i =1;i <= object.episode_count;i++){
-        let option = document.createElement('option')
-        option.value = i
-        option.innerText = i
-        Epselect.appendChild(option)
-      }
-      fetchOnChange()
-    }
-    addEps()
+      addEps()
+      Sessionselect.value = CachedSession || 1
+      Epselect.value = CachedEp || 1
+  }
+
   }else{
     console.log(show)
     const movieDetailsRes = await fetch(
@@ -485,15 +529,6 @@ async function cardSelect(show,li,isTv,cardSub){
 
     fetchOnChange()
   }
-  let Languagelabel = document.createElement('label')
-
-  // select
-  let langselect = document.createElement('select')
-  let All = document.createElement('option')
-  let dict = new Set()
-  let fetchsubdiv = document.createElement('div')
-  let fetchSubButton = document.createElement('button')
-
   All.value = "all"
   All.innerHTML = "all"
   fetchSubButton.style.border = 'none'
@@ -507,6 +542,7 @@ async function cardSelect(show,li,isTv,cardSub){
   fetchSubButton.innerText = "Fetch"
   function subDisplay(langfilter){
     document.querySelectorAll('.subCard').forEach((item)=>item.remove())
+    console.log(subtitles)
     subtitles.forEach((sub)=>{
         let resultcard = document.createElement('div')
         resultcard.className = 'subCard'
@@ -561,7 +597,7 @@ async function cardSelect(show,li,isTv,cardSub){
 
           <div class="right">
             <a href="${sub.attributes.url}" target="_blank" class="redirect-btn">⬇</a>
-            <button id="download-btn" data-id=${sub.attributes.subtitle_id} target="_blank" class="download-btn">⬇</button>
+            <button id="download-btn" data-id=${sub.attributes.files[0].file_id} target="_blank" class="download-btn">⬇</button>
           </div>
         </div>`
         results.appendChild(resultcard)
@@ -602,12 +638,15 @@ async function cardSelect(show,li,isTv,cardSub){
 
   ul.appendChild(results)
 
-  async function fetchOnChange(){
+  async function fetchOnChange(change){
+    console.log(change)
+    console.log(!change)
     if(isTv){
-      if(cardSub && cardSub.id == imdbjson.imdb_id){
+      if(cardSub && cardSub.id == imdbjson.imdb_id && !change){
         subtitles = cardSub.subtitlesCards
         subDisplay(langselect.value)
       }else{
+        subtitles = null
         await fetchTvSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
         subDisplay(langselect.value)
       }
@@ -615,8 +654,8 @@ async function cardSelect(show,li,isTv,cardSub){
       // Movie subtitles fetch
       console.log(MovieDetails)
       console.log(MovieDetails.original_title)
-        await fetchMovieSub(MovieDetails.original_title,MovieDetails.imdb_id,show.id,show.release_date.split("-")[0])
-        subDisplay(langselect.value)
+      await fetchMovieSub(MovieDetails.original_title,MovieDetails.imdb_id,show.id,show.release_date.split("-")[0])
+      subDisplay(langselect.value)
     }
   }
 
@@ -636,16 +675,10 @@ async function cardSelect(show,li,isTv,cardSub){
         subDisplay(langselect.value)
       }, 3000);
   })
-  langselect.appendChild(All)
 
-
-  selectContainer.appendChild(Languagelabel)
-  selectContainer.appendChild(langselect)
-  controlbar.appendChild(selectContainer)
+  controlbar.appendChild(fetchsubdiv)
   // controlbar.appendChild(manualsearch)
   // fetchsubdiv.appendChild(fetchSubButton)
-  controlbar.appendChild(fetchsubdiv)
-  results.appendChild(controlbar)
 
   
 
@@ -654,7 +687,6 @@ async function cardSelect(show,li,isTv,cardSub){
 reader.onload = (e) => {
     const text = e.target.result;
     let linesArr = text.split('\n')
-    // console.log(linesArr)
     let searchnum = 1
     let time = []
     let subtitle = []

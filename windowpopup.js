@@ -70,6 +70,12 @@
   });
   // Delay
   let delay = 0;
+  send("delay","GET", 0.0,(data)=>{
+    if(data){
+      delay = data.delay
+      updateDelay();
+    }
+});
   const delayVal = document.getElementById('delay-val');
 
   function updateDelay() {
@@ -84,14 +90,12 @@
   });
   delayVal.addEventListener("input", (e) => {
       send("delay","Input",delayVal.value,(data)=>{
-      console.log(data)
       delay = +delayVal.value
     });
   });
   document.getElementById('delay-plus').addEventListener('click', () => {
     send("delay","", +0.1,(data)=>{
       delay = data?.delay
-      console.log(delay)
       updateDelay();
     });
   });

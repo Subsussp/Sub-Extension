@@ -2,6 +2,13 @@ const isInsideIframe = window !== window.top;
 let videoref ;
 let subtitlename = "" ;
 let lastVideoId;
+
+// Injecting Search Board with shortcut
+// if(!isInsideIframe){
+
+// }
+
+
 // Waiting for DOM
 function whenReady(fn) {
 
@@ -202,6 +209,7 @@ function SubtitlesInit(video,delayControl) {
         // Listening for sub upload
         chrome.runtime.onMessage.addListener((msg,callback,sendResponse) => {
           if (msg?.action === 'srtuploaded' && subtitles !== msg?.data) {
+            console.log(msg.data)
             let location = window.location.href
             subtitles = msg.data;
             chrome.runtime.sendMessage({type:"SUB_SAVE" ,location,arrofobj:msg.data,name:msg.name})
@@ -228,16 +236,23 @@ function SubtitlesInit(video,delayControl) {
                   updateButton();
                   showControl()
                   clearTimeout(timeout);
-                                    if(!hover){
+                  if(!hover){
                     timeout = setTimeout(hideControl, 2000);
                   }
-                }else{  
+                }
+                else if(msg?.type == "GET"){
+                  if(sendResponse){
+                    sendResponse({ delay: subtitleDelay });
+                    return true
+                  }
+                }
+                else{  
                   subtitleDelay = +((+subtitleDelay + +msg.payload).toFixed(1));
                   window.localStorage.setItem("delay",(+subtitleDelay).toFixed(1))
                   updateButton();
                   showControl()
                   clearTimeout(timeout);
-                                    if(!hover){
+                  if(!hover){
                     timeout = setTimeout(hideControl, 2000);
                   }
                 }

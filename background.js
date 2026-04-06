@@ -1,4 +1,24 @@
+function parseTimeRange(line) {
+  const [start, end] = line.split(' --> ');
+  return {
+    start: Timestamp(start),
+    end: Timestamp(end)
+  };
+}
+
+function Timestamp(time){
+  const [hh, mm, rest] = time.split(':');
+  const [ss, ms] = rest.split(',');
+
+  return (
+    Number(hh) * 3600 +
+    Number(mm) * 60 +
+    Number(ss) +
+    Number(ms) / 1000
+  );
+}
 let delay = 0;
+let backEnd = `http://localhost:3000`
 chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
   if(msg?.action == "backgroundcall"){
     sendResponse({from:'background.js'})
@@ -16,6 +36,56 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
         });
         
   })
+    return true
+  }
+  if(msg?.action == "FetchAndinject"){
+    fetch(`${backEnd}/api/download?fileId=${msg?.data?.fileid}`).then(async (file)=>{
+      console.log(file.body)
+      let url = await file.json()
+      console.log(url)
+      try {
+        let textReq = await fetch(url.link)
+        let subText = await textReq.text()
+        let linesArr = subText.split('\n')
+        let searchnum = 1
+        let time = []
+        let subtitle = []
+        for(let i = 0;i < linesArr.length;i++){
+            if(searchnum == linesArr[i] || `${searchnum}\r`== linesArr[i]){
+                ++searchnum
+                let seconds = parseTimeRange(linesArr[i+1])
+                time.push(seconds)
+                let sub = ""
+                for(let g = i + 2; g < linesArr.length;g++){
+                    if(linesArr[g] == '' ||linesArr[g] == "\r"){
+                        g = linesArr.length
+                        subtitle.push(sub)
+                        sub = ""
+                    }else{
+                      sub = sub.concat('',linesArr[g] + ' ')
+                    }
+                }
+            }
+        }
+        console.log(subtitle)
+        chrome.tabs.query({ active: true, currentWindow: true },(tabs)=>{
+          if (!tabs[0]) return;
+          const tabId = tabs[0].id;
+          let arrofobj = []
+          time.forEach((item,i) => {
+            arrofobj.push({...item,text:subtitle[i]})
+          });
+          chrome.tabs.sendMessage(tabId, {
+            action: 'srtuploaded',
+            data: arrofobj,
+            name: url.file_name
+          });
+  })
+      } catch (error) {
+        console.log(error)
+      }
+    })
+    sendResponse({})
     return true
   }
   if(msg?.action == 'Deattach'){
