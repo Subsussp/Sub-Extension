@@ -41,15 +41,20 @@ let season;
 let arrow = document.getElementById('arrow-back')
 let comment = document.getElementById('comment')
 let searchinput = document.getElementById('subsearch')
+let fetchOn = false;
 const ul = document.getElementById('list');
 
 document.addEventListener("click",(e)=>{
-  if(e.target.classList.contains("download-btn") && fetchOn){
+  if(e.target.classList.contains("download-btn") && !fetchOn){
     let fileid = e.target.dataset.id
     let release = e.target.dataset.release
-    let fetchOn = true
+    fetchOn = true
     chrome.runtime.sendMessage({action:'FetchAndinject',data:{fileid,release}},(respnose)=>{
         fetchOn = false
+        e.target.innerHTML = 'Loaded'
+        setTimeout(() => {
+          e.target.innerHTML = 'Inject Subtitles'
+        }, 2000);
         console.log(respnose)
     })
   }
@@ -376,7 +381,6 @@ function fetchTvshowMv() {
       let Data = [...tvData.results,...moviesData.results]
       // removing the old search values
       ul.querySelectorAll('li').forEach((item)=>item.remove())
-      console.log(Data)
 
       if(Data?.length < 1){
           comment.style.opacity = 1 
@@ -523,14 +527,15 @@ async function cardSelect(show,li,isTv,cardSub){
   }
 
   }else{
-    console.log(show)
+    controlbar.appendChild(selectContainer)
+    results.appendChild(controlbar)
     const movieDetailsRes = await fetch(
       `https://api.themoviedb.org/3/movie/${show.id}`,
       { headers: {          
         Authorization:`Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3YWQ3MGYyYTE5NzdhODgxMDg3NzM3YzQ2YjlkNmEwNiIsIm5iZiI6MTczMjM3NjM4OC45NDQsInN1YiI6IjY3NDFmNzQ0ZDhkYjdkZDFiYTQ1MmVjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.y7UcPdAWd6nd0KIjBcYAJ-SQJ1dQ96sGGr93UsjnbTw`,
       }});
     MovieDetails = await movieDetailsRes.json();
-    console.log(MovieDetails) 
+
 
     fetchOnChange()
   }
@@ -559,32 +564,7 @@ async function cardSelect(show,li,isTv,cardSub){
         option.innerText = sub.attributes.language
         langselect.appendChild(option)
       }
-      if(langfilter != "all" && langfilter){
-        if(langfilter == sub.attributes.language){
-          resultcard.innerHTML =   `<div class="subtitle-row">
-          <div class="left">
-            <span class="lang">${ sub.attributes?.language?.toUpperCase()}</span>
-          </div>
-
-          <div class="middle">
-            <h3 class="title">${ sub.attributes.release}</h3>
-            <p class="release">${ sub.attributes.release.match(/\((.*?)\)/)?.[1] || ""}</p>
-
-            <div class="meta">
-              <span> ${ sub.attributes.download_count} Downloads</span>
-
-              ${ sub.attributes.foreign_parts_only ? `<span class="tag">Foreign</span>` : ""}
-            </div>
-          </div>
-
-          <div class="right">
-            <a href="${sub.attributes.url}" target="_blank" class="download-btn">⬇</a>
-          </div>
-        </div>`
-          results.appendChild(resultcard)
-      }
-      }else{
-          resultcard.innerHTML =   `<div class="subtitle-row">
+      let cardElement = `<div class="subtitle-row">
           <div class="left">
             <span class="lang">${ sub.attributes?.language?.toUpperCase()}</span>
           </div>
@@ -618,6 +598,13 @@ async function cardSelect(show,li,isTv,cardSub){
             <button title="Fetch and inject subtitles" id="download-btn" data-id=${sub.attributes.files[0].file_id} target="_blank" class="download-btn">Inject Subtitles</button>
           </div>
         </div>`
+      if(langfilter != "all" && langfilter){
+        if(langfilter == sub.attributes.language){
+          resultcard.innerHTML = cardElement
+          results.appendChild(resultcard)
+      }
+      }else{
+          resultcard.innerHTML = cardElement
         results.appendChild(resultcard)
       }
       

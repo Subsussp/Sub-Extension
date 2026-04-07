@@ -35,6 +35,8 @@ So my extension lets you do that :).
 * Subtitles Styling Full Control
 * It works on most websites, but I don’t guarantee that it will work on all streaming websites.
 * Fully works on **android phones** via `kiwi browser` but only on this version [Download](https://kiwi-browser.en.uptodown.com/android/download/1045295267)
+* **Subtitles Search** (Using databases like tmdb and imdb) and injecting them using only the extention without having to download them from third parties
+* a **Search Panel** to search and inject subtitles faster than using the poup
 
 ## Use Cases
 

@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
   if(msg?.action == "FetchAndinject"){
     fetch(`${backEnd}/api/download?fileId=${msg?.data?.fileid}`).then(async (file)=>{
       let url = await file.json()
-      sendResponse({})
+      sendResponse({remaining:url.remaining})
       try {
         let textReq = await fetch(url.link)
         let subText = await textReq.text()
@@ -67,7 +67,6 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
                 }
             }
         }
-        console.log(subtitle)
         chrome.tabs.query({ active: true, currentWindow: true },(tabs)=>{
           if (!tabs[0]) return;
           const tabId = tabs[0].id;
@@ -89,11 +88,17 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
     return true
   }
   if(msg?.type == "SUB_FETCH"){
-    fetch(`${backEnd}/api/search?q=${encodeURIComponent(msg.name)}&imdb_id=${msg.imdb_id}&year=${msg.year}&tmdb_id=${msg.tmdb_id}&episode=${msg.episode}&session=${msg.session}&isTv=${true}`).then(async (fetchdata)=>{      
-      let subtitles = await fetchdata.json()
-      sendResponse({sub:subtitles})
-      console.log(subtitles)
-    })
+    if(msg.isTv){
+      fetch(`${backEnd}/api/search?q=${encodeURIComponent(msg.name)}&imdb_id=${msg.imdb_id}&year=${msg.year}&tmdb_id=${msg.tmdb_id}&episode=${msg.episode}&session=${msg.session}&isTv=${true}`).then(async (fetchdata)=>{      
+        let subtitles = await fetchdata.json()
+        sendResponse({sub:subtitles})
+      })
+    }else{
+       fetch(`${backEnd}/api/search?q=${encodeURIComponent(msg.name)}&imdb_id=${msg.imdb_id}&year=${msg.year}&tmdb_id=${msg.tmdb_id}&isTv=${false}`).then(async (fetchdata)=>{      
+        let subtitles = await fetchdata.json()
+        sendResponse({sub:subtitles})
+      })
+    }
     return true
   }
   if(msg?.type == "CACHED_VALUES"){
