@@ -2,7 +2,7 @@ const isInsideIframe = window !== window.top;
 let videoref ;
 let subtitlename = "" ;
 let lastVideoId;
-
+let SHORTCUT_KEY =  "KeyB"
 // Injecting Search Board with shortcut
 if(!isInsideIframe){
   let cardSub;
@@ -280,7 +280,7 @@ if(!isInsideIframe){
 
         }
     }
-    if(e.ctrlKey && e?.key?.toLowerCase() == "b"){
+    if(e.ctrlKey && e?.code == SHORTCUT_KEY){
         e.preventDefault();
         e.stopPropagation();
         if(Panel.classList.contains('open')){
@@ -359,12 +359,13 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
     fetchOn = true
     chrome.runtime.sendMessage({action:'FetchAndinject',data:{fileid,release}},(respnose)=>{
         e.target.innerHTML = 'Injected'
+        document.getElementById("remaining-cont").style.display = "flex"
+        document.getElementById("remaining-down").innerHTML = `Remaining Downloads:<span style="color:green">${respnose.remaining}</span>`
         setTimeout(() => {
           e.target.innerHTML = 'Inject Subtitles'
           fetchOn = false
-
         }, 4000);
-        console.log(respnose)
+
     })
   }
 })
@@ -725,6 +726,7 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
     let dict = new Set()
     let fetchsubdiv = document.createElement('div')
     let fetchSubButton = document.createElement('button')
+    let Remaining = document.createElement('div')
 
     ul.innerHTML = ''
     ul.style.display = 'flex'
@@ -829,13 +831,16 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
   }
   All.value = "all"
   All.innerHTML = "all"
+  Remaining.style.cssText = `font-size: 14px;`
+  Remaining.id = "remaining-down"
   fetchSubButton.style.border = 'none'
   fetchSubButton.style.outline = 'none'
   fetchSubButton.style.padding = 'none'
   fetchSubButton.style.backgroundColor = 'black'
   fetchSubButton.style.color = 'white'
+  fetchsubdiv.id= "remaining-cont";
   fetchsubdiv.style.alignItems = "center";
-  fetchsubdiv.style.display = "flex";
+  fetchsubdiv.style.display = "block";
   fetchSubButton.style.padding = '5px 10px'
   fetchSubButton.innerText = "Fetch"
   function subDisplay(langfilter){
@@ -920,15 +925,17 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
 
   langselect.id = 'Language'
   
-
+  
   Languagelabel.innerHTML = 'Language:'
   let manualsearch = document.createElement('input')
   manualsearch.type = "text"
   manualsearch.style.cssText = `outline: none;border: 1px solid black;padding: 5px 10px 5px 5px ;background-color: transparent;position: relative;width:40%;height:50%;`
   manualsearch.placeholder = "Search Manually";
-
+  
   Languagelabel.setAttribute("for",'Language')
-
+  fetchsubdiv.appendChild(Remaining)
+  controlbar.appendChild(fetchsubdiv)
+  // fetchsubdiv.appendChild(fetchSubButton)
   ul.appendChild(results)
 
   async function fetchOnChange(change){
@@ -949,10 +956,10 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
     }
   }
 
-  // fetchSubButton.addEventListener('click',async ()=>{
-  //   await fetchTvSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
-  //   subDisplay(langselect.value)
-  // })
+  fetchSubButton.addEventListener('click',async ()=>{
+    await fetchTvSub(tvDetails.original_name,imdbjson.imdb_id,show.id,show.first_air_date.split("-")[0],Sessionselect.value,Epselect.value)
+    subDisplay(langselect.value)
+  })
     langselect.addEventListener('change',async ()=>{
       if(subtitlesC?.length > 0){
         subDisplay(langselect.value)
@@ -966,9 +973,8 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
         }, 3000);
     })
 
-  controlbar.appendChild(fetchsubdiv)
+
   // controlbar.appendChild(manualsearch)
-  // fetchsubdiv.appendChild(fetchSubButton)
 
   
 

@@ -50,12 +50,14 @@ document.addEventListener("click",(e)=>{
     let release = e.target.dataset.release
     fetchOn = true
     chrome.runtime.sendMessage({action:'FetchAndinject',data:{fileid,release}},(respnose)=>{
-        fetchOn = false
-        e.target.innerHTML = 'Loaded'
+        e.target.innerHTML = 'Injected'
+        document.getElementById("remaining-cont").style.display = "flex"
+        document.getElementById("remaining-down").innerHTML = `Remaining Downloads:<span style="color:green">${respnose.remaining}</span>`
         setTimeout(() => {
           e.target.innerHTML = 'Inject Subtitles'
-        }, 2000);
-        console.log(respnose)
+          fetchOn = false
+        }, 3000);
+
     })
   }
 })
@@ -424,6 +426,9 @@ async function cardSelect(show,li,isTv,cardSub){
   let results = document.createElement('div')
   let controlbar = document.createElement('div')
   let selectContainer = document.createElement('div')
+  let Remaining = document.createElement('div')
+  Remaining.style.cssText = `font-size: 14px;`
+  Remaining.id = "remaining-down"
 
   // labels
   let Sessionlabel;
@@ -438,7 +443,7 @@ async function cardSelect(show,li,isTv,cardSub){
   let dict = new Set()
   let fetchsubdiv = document.createElement('div')
   let fetchSubButton = document.createElement('button')
-
+  fetchsubdiv.id = "remaining-cont"
   ul.innerHTML = ''
   ul.style.display = 'flex'
   ul.style.alignItems = 'center'
@@ -447,7 +452,9 @@ async function cardSelect(show,li,isTv,cardSub){
   langselect.appendChild(All)
   selectContainer.appendChild(Languagelabel)
   selectContainer.appendChild(langselect)
-
+  
+  fetchsubdiv.appendChild(Remaining)
+  controlbar.appendChild(fetchsubdiv)
 
   if(isTv){
     Sessionlabel  = document.createElement('label')
