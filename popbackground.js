@@ -416,7 +416,7 @@ async function cardSelect(show,li,isTv,cardSub){
 
   chrome.storage.local.set({state:"Single",card:show})
   arrow.style.display = 'block';
-  list.style.display = 'block';
+  li.style.display = 'block';
   let results = document.createElement('div')
   let controlbar = document.createElement('div')
   let selectContainer = document.createElement('div')

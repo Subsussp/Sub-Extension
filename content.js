@@ -54,7 +54,7 @@ if(!isInsideIframe){
     color:  #171d1c;
     border: black 1px solid;
   }
-  #results{
+  #subExResults{
     padding: 2px;
     background-color: white;
     z-index: 300;
@@ -101,7 +101,7 @@ if(!isInsideIframe){
   .unfocus{
     opacity: 0!important;
   }
-  #arrow-back{
+  #subarrow-back{
     display: none;
     position: absolute;
     left: 0;
@@ -131,7 +131,7 @@ if(!isInsideIframe){
     height: 39px;
     z-index: 20;
   }
-  #inplace {
+  #subInplace {
     animation: Lftright 8s linear infinite ; 
   }
   .subtitle-row {
@@ -207,10 +207,10 @@ if(!isInsideIframe){
     padding: 2px 5px;
     border-radius: 5px;
   }
-  .panel{
+  .subPanel{
     display:none;     
   }
-  .panel.open{
+  .subPanel.open{
       display: flex;
       animation: 1.15s ease-out 0s 1 normal none running FadeIn;
   }
@@ -279,7 +279,7 @@ if(!isInsideIframe){
           Panel.classList.remove('open')
         }
     }
-    if(e.ctrlKey && e?.key?.toLowerCase() == "s"){
+    if(e.ctrlKey && e?.key?.toLowerCase() == "b"){
         e.preventDefault();
         e.stopPropagation();
         if(Panel.classList.contains('open')){
@@ -288,7 +288,7 @@ if(!isInsideIframe){
           Panel.classList.add('open')
           searchinput?.focus()
           function CheckIfClickedOutsideOfThePanel(Ce){
-            if(!document.getElementById('results').contains(Ce.target)){
+            if(!document.getElementById('subExResults').contains(Ce.target)){
               Panel.classList.remove('open')
               document.removeEventListener("click",CheckIfClickedOutsideOfThePanel)
             }
@@ -305,15 +305,15 @@ if(!isInsideIframe){
     z-index: 99999;    
     inset: 0px;
     background: rgba(0, 0, 0, 0.5);padding-top:15vh;`
-  Panel.className = "panel"
+  Panel.className = "subPanel"
   Panel.innerHTML =  `
-  <div id="results" style="border-radius: 30px;position: fixed;padding:7px 12px;background: #f4f7f5;    backdrop-filter: blur(4px);
+  <div id="subExResults" style="border-radius: 30px;position: fixed;padding:7px 12px;background: #f4f7f5;    backdrop-filter: blur(4px);
 width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translate(-50%,-50%);z-index: 9999;max-width: 910px;">
 
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" id="arrow-back" viewBox="0 0 24 24" style="display: none;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" id="subarrow-back" viewBox="0 0 24 24" style="display: none;">
       <path d="M19 11H7.83l4.88-4.88c.39-.39.39-1.03 0-1.42a.996.996 0 0 0-1.41 0l-6.59 6.59a.996.996 0 0 0 0 1.41l6.59 6.59a.996.996 0 1 0 1.41-1.41L7.83 13H19c.55 0 1-.45 1-1s-.45-1-1-1"></path>
     </svg>
-    <ul id="list" style="display: flex; gap: 20px; flex-flow: wrap; list-style: none; margin: 0px; padding: 10px 16px;">
+    <ul id="subex-list" style="display: flex; gap: 20px; flex-flow: wrap; list-style: none; margin: 0px; padding: 10px 16px;">
     <div id="MenuNav" style="position: relative; display: flex; padding: 10px 0px 0px; width: 100%; gap: 9px;">
       <div class="after"></div>
       <button class="buttn" style="z-index: 30;padding: 5px 10px; background-color: rgb(88, 99, 248); color: white; font-family: cursive; border-top: 2px solid black; border-bottom: 2px solid black; border-right: none; border-left: none; border-radius: 8px;">
@@ -336,21 +336,21 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
         align-items: center;
         gap: 4px;
         border-bottom: 2px solid #adacb5;">
-        <label id="comment" style="position: absolute;top: 50%;left: 73%;transform: translate(-50%,-50%);width: 100%;text-align: center;color: #ff000073;pointer-events: none;margin-top: -0.05rem;font-size: 10px;font-weight: bold;opacity: 0;">Nothing Found</label>
-        <label id="inplace" style="position: absolute; top: 50%; left: -30%; transform: translate(-50%, -50%); width: 100%; text-align: center; color: rgb(169, 169, 169); pointer-events: none; margin-top: -0.05rem; opacity: 1;">Search movies and TV shows</label>
+        <label id="subcomment" style="position: absolute;top: 50%;left: 73%;transform: translate(-50%,-50%);width: 100%;text-align: center;color: #ff000073;pointer-events: none;margin-top: -0.05rem;font-size: 10px;font-weight: bold;opacity: 0;">Nothing Found</label>
+        <label id="subInplace" style="position: absolute; top: 50%; left: -30%; transform: translate(-50%, -50%); width: 100%; text-align: center; color: rgb(169, 169, 169); pointer-events: none; margin-top: -0.05rem; opacity: 1;">Search movies and TV shows</label>
         <svg style="z-index: 30;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="subsearch" style="outline: none;border: none;padding: 5px 20px 5px 5px;background-color: transparent;width: 100%;position: relative;color: black;">
+        <input type="text" id="subexSearch" style="outline: none;border: none;padding: 5px 20px 5px 5px;background-color: transparent;width: 100%;position: relative;color: black;">
       </div>
     </div>
     </ul>
   </div>
   `
   document.body.appendChild(Panel)
-  let searchinput = document.getElementById('subsearch');
-  const ul = document.getElementById('list');
-  const comment = document.getElementById('comment');
-  const arrow = document.getElementById('arrow-back');
-  const inPlace = document.getElementById('inplace');
+  let searchinput = document.getElementById('subexSearch');
+  const ul = document.getElementById('subex-list');
+  const comment = document.getElementById('subcomment');
+  const arrow = document.getElementById('subarrow-back');
+  const inPlace = document.getElementById('subInplace');
   function Checkstorage(){
     chrome.runtime.sendMessage({ type: 'CACHED_VALUES'},
       (result) => {
@@ -358,6 +358,7 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
               console.error(chrome.runtime.lastError);
           } else {
             console.log(result)
+            console.log(state)
             console.log(result.searchtitle || null)
             if(result.state && !state){
                 state = result.state
@@ -405,6 +406,7 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
                   ul.innerHTML = ''
                   let isTv = result.card.media_type == "tv"
                   let [li,card] = CreateCard(result.card,isTv)
+                  console.log("hereeree")
                   cardSub = result.cardSub
                   CachedSession = +result.CachedSession
                   CachedEp = +result.CachedEp
@@ -441,17 +443,18 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
       clearTimeout(timer)
       if(query?.length < 1){
         comment.style.opacity = 0
-        document.getElementById('inplace').style.animation = "Lftright 8s linear infinite"
-        document.getElementById('inplace').style.opacity = 1
+        inPlace.style.animation = "Lftright 8s linear infinite"
+        inPlace.style.opacity = 1
         return
     }
-      document.getElementById('inplace').style.animation = "none"
-      document.getElementById('inplace').style.opacity = 0
+      inPlace.style.animation = "none"
+      inPlace.style.opacity = 0
       comment.style.opacity = 0
 
       if(query?.length < 2)return
       timer = setTimeout(async()=> {
         // Fetching the data
+        console.log(query)
         const res = await fetch(
           `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(query)}`,
           {
@@ -482,22 +485,30 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
         // removing the old search values
         ul.querySelectorAll('li').forEach((item)=>item.remove())
 
-
+        console.log(Data)
+        console.log(tempcatg)
+        
         if(Data?.length < 1){
-            comment.style.opacity = 1 
+          console.log('here1')
+          comment.style.opacity = 1 
         }else{
           if(!document.getElementById('MenuNav')){
+            console.log('here2')
             CreateNav(0)
           }
           if(tempcatg){
             if(tempcatg == "All"){
+              console.log('here3')
               appenData(Data)
             }else if(tempcatg == "Tv shows"){
+              console.log('here4')
               appenData(tvData.results)
             }else{
+              console.log('here5')
               appenData(moviesData.results)
             }
           }else{
+            console.log('here6')
             tempcatg = "All"
             appenData(Data)
           }
@@ -525,10 +536,10 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
         align-items: center;
         gap: 4px;
         border-bottom: 2px solid #adacb5;`
-    searchcoun.innerHTML = `<label id="comment" style="position: absolute;top: 50%;left: 73%;transform: translate(-50%,-50%);width: 100%;text-align: center;color: #ff000073;pointer-events: none;margin-top: -0.05rem;font-size: 10px;font-weight: bold;opacity: 0;">Nothing Found</label>
-        <label id="inplace" style="position: absolute; top: 50%; left: -30%; transform: translate(-50%, -50%); width: 100%; text-align: center; color: rgb(169, 169, 169); pointer-events: none; margin-top: -0.05rem; opacity: 1;">Search movies and TV shows</label>
+    searchcoun.innerHTML = `<label id="subcomment" style="position: absolute;top: 50%;left: 73%;transform: translate(-50%,-50%);width: 100%;text-align: center;color: #ff000073;pointer-events: none;margin-top: -0.05rem;font-size: 10px;font-weight: bold;opacity: 0;">Nothing Found</label>
+        <label id="subInplace" style="position: absolute; top: 50%; left: -30%; transform: translate(-50%, -50%); width: 100%; text-align: center; color: rgb(169, 169, 169); pointer-events: none; margin-top: -0.05rem; opacity: 1;">Search movies and TV shows</label>
         <svg style="z-index: 30;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="subsearch" style="outline: none;border: none;padding: 5px 20px 5px 5px;background-color: transparent;width: 100%;position: relative;color: black;">` 
+        <input type="text" id="subexSearch" style="outline: none;border: none;padding: 5px 20px 5px 5px;background-color: transparent;width: 100%;position: relative;color: black;">` 
     let anim= ["phase","phase2"]
     line.style.cssText = "margin-top:-7px;width:100%;height:2px;background-color:grey;"
     after.className = "after"
@@ -654,10 +665,11 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
     ul.appendChild(line)
     console.log(searchinput)
     searchinput.addEventListener(('input'), (e)=>{
-      console.log( e.target.value)
         query = e.target.value
+        console.log("sec")
         console.log(query)
-        // fetchTvshowMv()
+        fetchTvshowMv()
+
     })
 }
   function appenData(data){
@@ -1507,6 +1519,7 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
     let isTv = show?.media_type == "tv"
     let [li,card] = CreateCard(show,isTv)    
     ul.style.flexDirection = "row";
+    console.log("appending cards")
     ul.parentElement.style.display = 'block'
     card.addEventListener("click",(e)=>cardSelect(show,li,isTv,cardSub))
     ul.appendChild(li)
@@ -1521,7 +1534,7 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
 
   // chrome.storage.local.set({state:"Single",card:show})
   arrow.style.display = 'block';
-  list.style.display = 'block';
+  li.style.display = 'block';
   let results = document.createElement('div')
   let controlbar = document.createElement('div')
   let selectContainer = document.createElement('div')
@@ -2062,7 +2075,6 @@ function SubtitlesInit(video,delayControl) {
     document.addEventListener("mousemove", () => {
         showControl()
         clearTimeout(timeout);
-        console.log(hover)
         if(!hover){
           timeout = setTimeout(hideControl, 2000);
         }
