@@ -20,8 +20,11 @@ if(!isInsideIframe){
   let secTimer;
   let epTimer;
   let fetchOn = false;
-
-  const css = `
+ 
+    const css = `
+  #notificationCont-sub.Subexclose{
+    opacity:0;
+  }
   #btn{
     background-color: #5863F8;
     color:  #efe9f4;
@@ -55,7 +58,7 @@ if(!isInsideIframe){
     color:  #171d1c;
     border: black 1px solid;
   }
-  .open #subExResults{
+  .Subexopen #subExResults{
     overflow-x:hidden
   }
   .container{
@@ -126,7 +129,7 @@ if(!isInsideIframe){
     display: inline-block;
     background-color: #f4f7f5;
     width: 100%;
-    height: 39px;
+    height: 47px;
     z-index: 20;
   }
   #subInplace {
@@ -208,8 +211,13 @@ if(!isInsideIframe){
   }
   .subPanel{
     display:none;     
+    direction: ltr!important;
+    transition: all 0.25s ease;
   }
-  .subPanel.open{
+  .subPanel.Subexclose{
+    opacity:0;
+  }
+  .subPanel.Subexopen{
       display: flex;
       animation: .45s ease-out 0s 1 normal none running FadeIn;
   }
@@ -271,11 +279,100 @@ if(!isInsideIframe){
   const styleEl = document.createElement('style');
   styleEl.textContent = css;
   document.head.appendChild(styleEl);
+  let notify;
+  let listenForclicks;
+ chrome.storage.local.get("APPEND_NOTIFICATION",(res)=>{
+    if (chrome.runtime.lastError) return;
+      if (!res.APPEND_NOTIFICATION) {
+        notify = document.createElement("div")
+    notify.id = "notificationCont-sub"
+    notify.style.cssText = `    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      direction: ltr;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999999;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(4px);
+      `
+      notify.innerHTML = `<div id="notification-sub" style="
+      font-family: cursive;
+      font-size: 14px;
+      width: 60%;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      background: rgba(255,255,255,0.85);
+      color: #333;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.1);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: all 0.25s ease;
+    ">
+      Press 
+      <span style="
+        display:inline-block;
+        padding:2px 6px;
+        margin:0 3px;
+        font-size:11px;
+        user-select:none;
+        font-weight:600;
+        background:#5863F8;
+        color:white;
+        border-radius:5px;
+        box-shadow: inset 0 -2px 0 rgba(0,0,0,0.94);
+      ">Ctrl</span> 
+      + 
+      <span style="
+        display:inline-block;
+        padding:2px 6px;
+        margin:0 3px;
+        user-select:none;
+        font-size:11px;
+        font-weight:600;
+        background:#5863F8;
+        color:white;
+        border-radius:5px;
+        box-shadow: inset 0 -2px 0 rgba(0,0,0,0.94);
+      ">B</span> 
+      to open the search panel for a better experience
+    </div>`
+    listenForclicks = function (){
+      
+      document.removeEventListener("click",listenForclicks)
+      notify.classList.add('Subexclose')
+      chrome.storage.local.set({ APPEND_NOTIFICATION: true });
+      setTimeout(() => {
+        notify.remove()
+        let pan = document.getElementsByClassName('subPanel')[0] 
+        if(pan){
+          pan.classList.add("Subexopen")
+          setTimeout(() => {
+            pan.classList.add("Subexclose")
+            setTimeout(()=>{
+              pan.classList.remove("Subexopen")
+              pan.classList.remove("Subexclose")
+            },700)
+          }, 1200);
+        }
+      }, 600);
+    }
+    document.addEventListener("click",listenForclicks)
+    document.body.appendChild(notify)
+    }}
+  )
+
   let Panel = document.createElement('div')
   document.addEventListener("keydown",(e)=>{
     if(e?.key?.toLowerCase() == "escape"){
-        if(Panel.classList.contains('open')){
-          Panel.classList.remove('open')
+        if(Panel.classList.contains('Subexopen')){
+          Panel.classList.remove('Subexopen')
           CacheData()
 
         }
@@ -283,16 +380,26 @@ if(!isInsideIframe){
     if(e.ctrlKey && e?.code == SHORTCUT_KEY){
         e.preventDefault();
         e.stopPropagation();
-        if(Panel.classList.contains('open')){
-          Panel.classList.remove('open')
+        if(notify){
+          if(listenForclicks){
+            document.removeEventListener("click",listenForclicks)
+          }
+          notify.classList.add('Subexclose')
+          chrome.storage.local.set({ APPEND_NOTIFICATION: true });
+          setTimeout(() => {
+            notify.remove()
+          }, 600);
+        }
+        if(Panel.classList.contains('Subexopen')){
+          Panel.classList.remove('Subexopen')
           CacheData()
 
         }else{
-          Panel.classList.add('open')
+          Panel.classList.add('Subexopen')
           searchinput?.focus()
           function CheckIfClickedOutsideOfThePanel(Ce){
             if(!document.getElementById('subExResults').contains(Ce.target)){
-              Panel.classList.remove('open')
+              Panel.classList.remove('Subexopen')
               CacheData()
               document.removeEventListener("click",CheckIfClickedOutsideOfThePanel)
             }
@@ -490,8 +597,8 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
         // removing the old search values
         ul.querySelectorAll('li').forEach((item)=>item.remove())
 
-        console.log(Data)
-        console.log(tempcatg)
+        // console.log(Data)
+        // console.log(tempcatg)
         
         if(Data?.length < 1){
           comment = document.getElementById('subcomment');
@@ -604,8 +711,9 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
             // chrome.storage.local.set({catg:"All"})
             tempcatg = "All"
             ul.querySelectorAll('li').forEach((item)=>item.remove())
-            appenData([...temptvshows.results,...tempmovies.results])
-          }
+            if(temptvshows?.results || tempmovies?.results){
+             appenData([...temptvshows?.results,...tempmovies?.results])
+            }}
             after.style.background = "linear-gradient(107deg,rgba(46, 46, 58, 0.91) 0%, rgba(88, 99, 248, 1) 62%)"
           if(after.classList.contains('phase2')){
             after.classList.remove("phase2");
@@ -624,7 +732,9 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
             // chrome.storage.local.set({catg:"Tv shows"})
             tempcatg = "Tv shows"
             ul.querySelectorAll('li').forEach((item)=>item.remove())
-            appenData(temptvshows.results)
+            if(temptvshows?.results){
+              appenData(temptvshows.results)
+            }
           }
           if(after.classList.contains('phase2')){
             after.style.background = "linear-gradient(107deg,rgba(46, 46, 58, 0.91) 0%, rgba(88, 99, 248, 1) 62%)"
@@ -642,7 +752,9 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
 
             tempcatg = "Movies"
             ul.querySelectorAll('li').forEach((item)=>item.remove())
-            appenData(tempmovies.results)
+            if(tempmovies?.results){
+              appenData(tempmovies.results)
+          }
           }
           after.style.background = "linear-gradient(107deg,rgba(88, 99, 248, 1) 0%, rgba(46, 46, 58, 0.91) 62%)"
           if(after.classList.contains('phase') ||  after.classList.contains('Phase2reverse')){
@@ -949,8 +1061,6 @@ width: 100%;height: 100%;max-height: 67vh;left: 50%;top: 40%;transform: translat
       }
     }else{
       // Movie subtitles fetch
-      console.log(MovieDetails)
-      console.log(MovieDetails.original_title)
       subtitlesC = await fetchMovieSub(MovieDetails.original_title,MovieDetails.imdb_id,show.id,show.release_date.split("-")[0])
       subDisplay(langselect.value)
     }
@@ -1430,7 +1540,6 @@ whenReady(() => {
   document.body.appendChild(delayControl);
   delayControl.addEventListener('mouseenter',()=>{
     hover = true
-    console.log(hover )
     clearTimeout(timeout)
       delayControl.style.opacity = '1';
       delayControl.style.visibility = 'visible';

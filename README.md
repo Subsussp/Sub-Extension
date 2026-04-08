@@ -17,7 +17,7 @@ That's it go to your favourite streaming website and test it out :)
 * https://www.downloadyoutubesubtitles.com/
 
 ## Demo (if you are unable to test it)
-https://github.com/user-attachments/assets/d77dccd6-c9d1-4f4b-947e-488997dc2217
+https://github.com/user-attachments/assets/c113d853-840c-4e58-b702-9712173be3e8
 
 ## The Story behind it
 I adore watching TV shows, and while I was looking for British TV shows, I came across a series called Time.
@@ -38,6 +38,8 @@ So my extension lets you do that :).
 * **Subtitles Search** (Using databases like tmdb and imdb) and injecting them using only the extention without having to download them from third parties
 * a **Search Panel** to search and inject subtitles faster than using the poup
 
+**Tip** (Shortcut): Speed up your Search By using `Ctrl + B`!  
+
 ## Use Cases
 
 - When the streaming website doesn't provide subtitles in your language—or the language you are trying to learn—but you can find the subtitle file online.
@@ -54,3 +56,16 @@ https://github.com/user-attachments/assets/6eddaf3d-6669-4a93-8b97-0c1ab3069ed7
    <img width="45%" alt="Image" src="https://github.com/user-attachments/assets/f597453a-9cc7-4065-a6e0-09058abee849" />
   <img width="45%"  alt="Image" src="https://github.com/user-attachments/assets/ed1ecea7-e3f7-4a03-a49b-20afe4f8dd0a" />
 </p>
+
+<p align="center">
+   <img width="45%" alt="Image" src="https://github.com/user-attachments/assets/e4138e89-3240-4fad-a87f-cb5e3119a1e1" />
+  <img width="45%" alt="Image" src="https://github.com/user-attachments/assets/32956da5-901d-4988-b99d-5436cbcad042" />
+</p>
+
+---
+
+[![Badge](https://img.shields.io/badge/Made_By-Subsussp-purple?style=for-the-badge)](https://github.com/Subsussp)
+[![Version](https://img.shields.io/badge/Version-2.0.0-blue?style=for-the-badge)]()
+![Letter](https://img.shields.io/badge/Thanks_for_trying_it-:\)-blue?style=for-the-badge)
+
+

@@ -75,9 +75,6 @@ document.addEventListener("click",(e)=>{
         document.getElementById('inplace').style.animation = "none"
         document.getElementById('inplace').style.opacity = 0
       }
-      console.log( Array.isArray(result?.searchdata) &&result.searchdata.length > 0)
-      console.log( Array.isArray(result?.tvshows.results) &&result.tvshows.results?.length > 0)
-      console.log( result.catg == "All")
       query = result.searchtitle || null
       ul.innerHTML = ''
       tempcatg = result.catg
@@ -271,7 +268,6 @@ async function fetchMovieSub(name,imdb_id,tmdb_id,year){
   let fetchdata = await fetch(`${backend}/api/search?q=${encodeURIComponent(name)}&imdb_id=${imdb_id}&year=${year}&tmdb_id=${tmdb_id}&isTv=${false}`) 
   subtitles = ''
   subtitles = await fetchdata.json()
-  console.log(subtitles)
   chrome.storage.local.set({cardSub:{subtitlesCards:subtitles,id:imdb_id}})
 }
 function appendresult(show,i){
@@ -289,6 +285,9 @@ function appendresult(show,i){
   function appenData(data){
     if(data?.length > 0){
       // Discarding data with vote count less that 1
+      if(document.getElementById("SubSub-container")){
+        document.getElementById("SubSub-container").remove()
+      }
       data.forEach((show,i)=>{if(show.vote_count > 0){appendresult(show,i)}})
     }else{
       // No Search results
@@ -559,7 +558,6 @@ async function cardSelect(show,li,isTv,cardSub){
   fetchSubButton.innerText = "Fetch"
   function subDisplay(langfilter){
     document.querySelectorAll('.subCard').forEach((item)=>item.remove())
-    console.log(subtitles)
     subtitles.forEach((sub)=>{
         let resultcard = document.createElement('div')
         resultcard.className = 'subCard'
@@ -631,6 +629,7 @@ async function cardSelect(show,li,isTv,cardSub){
   selectContainer.style.padding = "10px";
   controlbar.style.width = "100%";
   results.style.display = "flex";
+  results.id = "SubSub-container";
   results.style.flexDirection = "column";
   results.style.gap = "10px";
   results.style.width= "100%";
@@ -651,8 +650,6 @@ async function cardSelect(show,li,isTv,cardSub){
   ul.appendChild(results)
 
   async function fetchOnChange(change){
-    console.log(change)
-    console.log(!change)
     if(isTv){
       if(cardSub && cardSub.id == imdbjson.imdb_id && !change){
         subtitles = cardSub.subtitlesCards
@@ -664,8 +661,6 @@ async function cardSelect(show,li,isTv,cardSub){
       }
     }else{
       // Movie subtitles fetch
-      console.log(MovieDetails)
-      console.log(MovieDetails.original_title)
       await fetchMovieSub(MovieDetails.original_title,MovieDetails.imdb_id,show.id,show.release_date.split("-")[0])
       subDisplay(langselect.value)
     }
@@ -721,7 +716,6 @@ reader.onload = (e) => {
     }
     chrome.runtime.sendMessage({action:'backgroundcall',data:{time,subtitle,name}},(respnose)=>{
         console.log(respnose)
-        console.log(respnose.from)
     }
     )
 };
@@ -730,7 +724,7 @@ file.addEventListener('input', (e)=>{
   reader.readAsText(e.target.files[0]);
 })
 document.getElementById('Deattachbtn').addEventListener('click',()=>{
-    window.close();
     chrome.runtime.sendMessage({action:'Deattach'}) 
+    window.close();
   }
 )

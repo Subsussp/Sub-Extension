@@ -19,6 +19,7 @@ function Timestamp(time){
 }
 let delay = 0;
 let backEnd = `https://extention-442a3505471f.herokuapp.com`
+let lastWindowId ;
 // let backEnd = `http://localhost:3000`
 chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
   if(msg?.action == "backgroundcall"){
@@ -121,7 +122,9 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
 
       const popupWidth = Math.min(510, Math.floor(width * .42));
       const popupHeight = Math.min(700, Math.floor(height * 0.4));
-
+      chrome.windows.getLastFocused({ populate: false, windowTypes: ["normal"] }, (window) => {
+        lastWindowId = window.id
+      })
       chrome.windows.create({
         url: chrome.runtime.getURL("windowpopup.html"),
         type: "popup",
@@ -134,20 +137,19 @@ chrome.runtime.onMessage.addListener((msg,callback,sendResponse)=>{
     return true
   }
   if(msg?.to == "content"){
-    chrome.windows.getAll({ populate: true }, (windows) => {
-      const normalWindow = windows.find(w => w.type === "normal");
-      if (!normalWindow) return;
-      
-      const activeTab = normalWindow.tabs.find(t => t.active);
-      if (!activeTab) return;
-      chrome.tabs.sendMessage(activeTab.id,{
-            action: msg?.action,
-            spec: msg?.spec,
-            type:msg?.type,
-            payload:msg?.payload
-          },sendResponse);
-    });
 
+      chrome.tabs.query({active:true,windowId:lastWindowId},(tabs)=>{
+        const activeTab = tabs[0];
+        if (!activeTab) return;
+        chrome.tabs.sendMessage(activeTab.id,{
+              action: msg?.action,
+              spec: msg?.spec,
+              type:msg?.type,
+              payload:msg?.payload
+            },sendResponse);
+
+
+      })
     return true
   }
   if(msg?.type == 'SUB_GET'){
