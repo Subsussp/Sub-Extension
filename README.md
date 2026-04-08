@@ -65,7 +65,7 @@ https://github.com/user-attachments/assets/6eddaf3d-6669-4a93-8b97-0c1ab3069ed7
 ---
 
 [![Badge](https://img.shields.io/badge/Made_By-Subsussp-purple?style=for-the-badge)](https://github.com/Subsussp)
-[![Version](https://img.shields.io/badge/Version-2.0.0-blue?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/Version-2.0.0-blue?style=for-the-badge)](https://github.com/Subsussp/Sub-Extension/releases/tag/v2.0.0)
 ![Letter](https://img.shields.io/badge/Thanks_for_trying_it-:\)-blue?style=for-the-badge)
 
 
