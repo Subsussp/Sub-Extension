@@ -61,10 +61,6 @@ if(!isInsideIframe){
   .Subexopen #subExResults{
     overflow-x:hidden
   }
-  .container{
-    display: flex;
-    background-color: transparent;
-  }
   .buttn,.buttn1,.buttn2{
     position: relative;
     transition: all 1200ms ease-in-out;
